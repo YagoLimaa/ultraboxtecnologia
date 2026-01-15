@@ -5,6 +5,27 @@ import { getApiBaseUrl } from '../utils.ts';
 
 type Step = 'details' | 'payment' | 'confirmation';
 
+// Mask functions
+const maskPhone = (value: string): string => {
+  const numbers = value.replace(/\D/g, '');
+  
+  if (numbers.length === 0) return '';
+  if (numbers.length <= 2) return `(${numbers}`;
+  if (numbers.length <= 6) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+  if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
+  return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+};
+
+const maskCPF = (value: string): string => {
+  const numbers = value.replace(/\D/g, '');
+  
+  if (numbers.length === 0) return '';
+  if (numbers.length <= 3) return numbers;
+  if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+  if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
+  return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
+};
+
 interface PaymentStatusResponse {
   status: 'PAID' | 'PENDING' | 'EXPIRED';
 }
@@ -217,11 +238,11 @@ export default function Checkout() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-2">Celular</label>
-            <input type="tel" value={customerCellphone} onChange={(e) => setCustomerCellphone(e.target.value)} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            <input type="tel" value={customerCellphone} onChange={(e) => setCustomerCellphone(maskPhone(e.target.value))} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
           </div>
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-2">CPF</label>
-            <input type="text" value={customerTaxId} onChange={(e) => setCustomerTaxId(e.target.value)} placeholder="000.000.000-00" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            <input type="text" value={customerTaxId} onChange={(e) => setCustomerTaxId(maskCPF(e.target.value))} placeholder="000.000.000-00" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
           </div>
         </div>
       </div>

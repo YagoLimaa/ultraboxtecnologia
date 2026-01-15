@@ -1,0 +1,11 @@
+{
+  "name": "backend",
+  "private": true,
+  "scripts": {
+    "dev": "npx wrangler pages dev --compatibility-date=2024-01-01 --proxy 8788",
+    "build": "echo \"No backend build configured\""
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}

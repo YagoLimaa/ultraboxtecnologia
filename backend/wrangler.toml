@@ -1,0 +1,7 @@
+name = "site"
+pages_build_output_dir = "../site/build"
+functions = "functions"
+
+[[kv_namespaces]]
+binding = "PAYMENTS"
+id = "a5d0192385be4afa9ca49a405ef5a563"

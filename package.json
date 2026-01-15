@@ -1,5 +1,5 @@
 {
-  "name": "site-root",
+  "name": "ultraboxtecnologia",
   "private": true,
   "scripts": {
     "dev": "npx concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",

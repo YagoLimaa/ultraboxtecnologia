@@ -3,7 +3,7 @@ const formatTLV = (id, value) => {
   return `${id}${len}${value}`;
 };
 
-// CRC16-CCITT calculation used in PIX QR codes
+// CRC16-CCITT calculation used in PIX QR codes teste
 const crc16 = (data) => {
   let crc = 0xFFFF;
   for (let i = 0; i < data.length; i++) {

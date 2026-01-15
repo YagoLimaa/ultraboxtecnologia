@@ -1,0 +1,552 @@
+[
+  {
+    "id": 1,
+    "nome": "Centro - Feira de Santana",
+    "position": [-12.2667, -38.9667],
+    "totalClientes": 45,
+    "clientes": [
+      { "id": 1, "nome": "Cliente A", "position": [-12.2650, -38.9670] },
+      { "id": 2, "nome": "Cliente B", "position": [-12.2680, -38.9650] },
+      { "id": 3, "nome": "Cliente C", "position": [-12.2655, -38.9680] },
+      { "id": 200, "nome": "Nova Loja de Roupas", "position": [-12.267, -38.966] },
+      { "id": 201, "nome": "Cafeteria Central", "position": [-12.266, -38.9675] }
+    ]
+  },
+  {
+    "id": 2,
+    "nome": "Kalilândia - Feira de Santana",
+    "position": [-12.2450, -38.9550],
+    "totalClientes": 32,
+    "clientes": [
+      { "id": 4, "nome": "Cliente D", "position": [-12.2440, -38.9560] },
+      { "id": 5, "nome": "Cliente E", "position": [-12.2460, -38.9540] },
+      { "id": 202, "nome": "Clínica Sorriso", "position": [-12.2455, -38.9545] }
+    ]
+  },
+  {
+    "id": 3,
+    "nome": "Tomba - Feira de Santana",
+    "position": [-12.2800, -38.9800],
+    "totalClientes": 28,
+    "clientes": [
+      { "id": 6, "nome": "Cliente F", "position": [-12.2810, -38.9810] },
+      { "id": 7, "nome": "Cliente G", "position": [-12.2790, -38.9790] },
+      { "id": 203, "nome": "Supermercado Preço Bom", "position": [-12.2805, -38.9795] }
+    ]
+  },
+  {
+    "id": 4,
+    "nome": "Mangabeira - Feira de Santana",
+    "position": [-12.2550, -38.9900],
+    "totalClientes": 38,
+    "clientes": [
+      { "id": 8, "nome": "Cliente H", "position": [-12.2560, -38.9910] },
+      { "id": 9, "nome": "Cliente I", "position": [-12.2540, -38.9890] },
+      { "id": 204, "nome": "Academia Corpo em Forma", "position": [-12.2545, -38.9905] },
+      { "id": 205, "nome": "Petshop Amigo Fiel", "position": [-12.2555, -38.9895] }
+    ]
+  },
+  {
+    "id": 5,
+    "nome": "São Paulo - Centro",
+    "position": [-23.5505, -46.6333],
+    "totalClientes": 120,
+    "clientes": [
+      { "id": 10, "nome": "Cliente SP 1", "position": [-23.5510, -46.6340] },
+      { "id": 11, "nome": "Cliente SP 2", "position": [-23.5490, -46.6320] },
+      { "id": 206, "nome": "Livraria Cultura", "position": [-23.5500, -46.6330] },
+      { "id": 207, "nome": "Restaurante Sabor Paulista", "position": [-23.5515, -46.6325] }
+    ]
+  },
+  {
+    "id": 6,
+    "nome": "Rio de Janeiro - Copacabana",
+    "position": [-22.9719, -43.1825],
+    "totalClientes": 85,
+    "clientes": [
+      { "id": 12, "nome": "Cliente RJ 1", "position": [-22.9725, -43.1830] },
+      { "id": 13, "nome": "Cliente RJ 2", "position": [-22.9700, -43.1810] },
+      { "id": 208, "nome": "Bar do Zeca", "position": [-22.9710, -43.1820] }
+    ]
+  },
+  {
+    "id": 7,
+    "nome": "Belo Horizonte - Savassi",
+    "position": [-19.9328, -43.9353],
+    "totalClientes": 65,
+    "clientes": [
+      { "id": 100, "nome": "Cliente Belo 1", "position": [-19.9338, -43.9363] },
+      { "id": 209, "nome": "Pão de Queijo & Cia", "position": [-19.9320, -43.9350] }
+    ]
+  },
+  {
+    "id": 8,
+    "nome": "Salvador - Pelourinho",
+    "position": [-12.9711, -38.5108],
+    "totalClientes": 40,
+    "clientes": [
+      { "id": 101, "nome": "Cliente Salvador 1", "position": [-12.9721, -38.5118] },
+      { "id": 210, "nome": "Loja de Artesanato Local", "position": [-12.9705, -38.5100] }
+    ]
+  },
+  {
+    "id": 9,
+    "nome": "Curitiba - Centro Cívico",
+    "position": [-25.4194, -49.2644],
+    "totalClientes": 70,
+    "clientes": [
+        { "id": 102, "nome": "Cliente Curitiba 1", "position": [-25.4204, -49.2654] },
+        { "id": 211, "nome": "Consultório Odontológico", "position": [-25.4190, -49.2640] }
+    ]
+  },
+  {
+    "id": 10,
+    "nome": "Recife - Boa Viagem",
+    "position": [-8.1252, -34.9030],
+    "totalClientes": 55,
+    "clientes": [
+      { "id": 103, "nome": "Cliente Recife 1", "position": [-8.1262, -34.9040] },
+      { "id": 212, "nome": "Barraca do Coco", "position": [-8.1250, -34.9025] }
+    ]
+  },
+  {
+    "id": 11,
+    "nome": "Porto Alegre - Moinhos de Vento",
+    "position": [-30.0277, -51.2001],
+    "totalClientes": 60,
+    "clientes": [
+        { "id": 104, "nome": "Cliente Porto 1", "position": [-30.0287, -51.2011] },
+        { "id": 213, "nome": "Churrascaria Gaúcha", "position": [-30.0270, -51.2000] }
+    ]
+  },
+  {
+    "id": 12,
+    "nome": "Fortaleza - Meireles",
+    "position": [-3.7227, -38.4908],
+    "totalClientes": 75,
+    "clientes": [
+        { "id": 105, "nome": "Cliente Fortaleza 1", "position": [-3.7237, -38.4918] },
+        { "id": 214, "nome": "Agência de Turismo Sol", "position": [-3.7220, -38.4900] }
+    ]
+  },
+  {
+    "id": 13,
+    "nome": "Brasília - Asa Sul",
+    "position": [-15.8099, -47.8929],
+    "totalClientes": 90,
+    "clientes": [
+        { "id": 106, "nome": "Cliente Brasília 1", "position": [-15.8109, -47.8939] },
+        { "id": 215, "nome": "Escritório de Advocacia", "position": [-15.8090, -47.8920] }
+    ]
+  },
+  {
+    "id": 14,
+    "nome": "Manaus - Adrianópolis",
+    "position": [-3.1019, -60.0151],
+    "totalClientes": 30,
+    "clientes": [
+        { "id": 107, "nome": "Cliente Manaus 1", "position": [-3.1029, -60.0161] },
+        { "id": 216, "nome": "Peixaria do Amazonas", "position": [-3.1010, -60.0150] }
+    ]
+  },
+  {
+    "id": 15,
+    "nome": "Goiânia - Setor Marista",
+    "position": [-16.6973, -49.2684],
+    "totalClientes": 50,
+    "clientes": [
+        { "id": 108, "nome": "Cliente Goiânia 1", "position": [-16.6983, -49.2694] },
+        { "id": 217, "nome": "Loja de Moda Sertaneja", "position": [-16.6970, -49.2680] }
+    ]
+  },
+  {
+    "id": 16,
+    "nome": "Belém - Nazaré",
+    "position": [-1.4458, -48.4839],
+    "totalClientes": 25,
+    "clientes": [
+        { "id": 109, "nome": "Cliente Belém 1", "position": [-1.4468, -48.4849] },
+        { "id": 218, "nome": "Açaí do Point", "position": [-1.4450, -48.4830] }
+    ]
+  },
+  {
+    "id": 17,
+    "nome": "São Luís - Ponta d'Areia",
+    "position": [-2.5028, -44.3088],
+    "totalClientes": 35,
+    "clientes": [
+        { "id": 110, "nome": "Cliente São 1", "position": [-2.5038, -44.3098] },
+        { "id": 219, "nome": "Pousada Ilha Bela", "position": [-2.5020, -44.3080] }
+    ]
+  },
+  {
+    "id": 18,
+    "nome": "Florianópolis - Jurerê",
+    "position": [-27.4391, -48.4410],
+    "totalClientes": 45,
+    "clientes": [
+        { "id": 111, "nome": "Cliente Florianópolis 1", "position": [-27.4401, -48.4420] },
+        { "id": 220, "nome": "Beach Club Paradise", "position": [-27.4385, -48.4400] }
+    ]
+  },
+  {
+    "id": 19,
+    "nome": "Natal - Ponta Negra",
+    "position": [-5.8791, -35.1747],
+    "totalClientes": 40,
+    "clientes": [
+        { "id": 112, "nome": "Cliente Natal 1", "position": [-5.8801, -35.1757] },
+        { "id": 221, "nome": "Hotel Vista Mar", "position": [-5.8785, -35.1740] }
+    ]
+  },
+  {
+    "id": 20,
+    "nome": "João Pessoa - Tambaú",
+    "position": [-7.1065, -34.8219],
+    "totalClientes": 30,
+    "clientes": [
+        { "id": 113, "nome": "Cliente João 1", "position": [-7.1075, -34.8229] },
+        { "id": 222, "nome": "Restaurante Maré Alta", "position": [-7.1060, -34.8210] }
+    ]
+  },
+  {
+    "id": 21,
+    "nome": "Vitória - Praia do Canto",
+    "position": [-20.2974, -40.2958],
+    "totalClientes": 50,
+    "clientes": [
+        { "id": 114, "nome": "Cliente Vitória 1", "position": [-20.2984, -40.2968] },
+        { "id": 223, "nome": "Boutique Glamour", "position": [-20.2970, -40.2950] }
+    ]
+  },
+  {
+    "id": 22,
+    "nome": "Aracaju - Atalaia",
+    "position": [-10.9850, -37.0425],
+    "totalClientes": 28,
+    "clientes": [
+      { "id": 115, "nome": "Cliente Aracaju 1", "position": [-10.9860, -37.0435] },
+      { "id": 224, "nome": "Sorveteria Sol de Verão", "position": [-10.9845, -37.0420] }
+    ]
+  },
+  {
+    "id": 23,
+    "nome": "Maceió - Pajuçara",
+    "position": [-9.6678, -35.7145],
+    "totalClientes": 38,
+    "clientes": [
+      { "id": 116, "nome": "Cliente Maceió 1", "position": [-9.6688, -35.7155] },
+      { "id": 225, "nome": "Passeios de Jangada", "position": [-9.6670, -35.7140] }
+    ]
+  },
+  {
+    "id": 24,
+    "nome": "Campo Grande - Centro",
+    "position": [-20.4697, -54.6201],
+    "totalClientes": 42,
+    "clientes": [
+      { "id": 117, "nome": "Cliente Campo 1", "position": [-20.4707, -54.6211] },
+      { "id": 226, "nome": "Loja de Tereré", "position": [-20.4690, -54.6200] }
+    ]
+  },
+  {
+    "id": 25,
+    "nome": "Cuiabá - Goiabeiras",
+    "position": [-15.5804, -56.0822],
+    "totalClientes": 33,
+    "clientes": [
+      { "id": 118, "nome": "Cliente Cuiabá 1", "position": [-15.5814, -56.0832] },
+      { "id": 227, "nome": "Farmácia Bem-Estar", "position": [-15.5800, -56.0820] }
+    ]
+  },
+  {
+    "id": 26,
+    "nome": "Teresina - Jóquei",
+    "position": [-5.0744, -42.7844],
+    "totalClientes": 29,
+    "clientes": [
+      { "id": 119, "nome": "Cliente Teresina 1", "position": [-5.0754, -42.7854] },
+      { "id": 228, "nome": "Padaria Pão Quente", "position": [-5.0740, -42.7840] }
+    ]
+  },
+  {
+    "id": 27,
+    "nome": "Porto Velho - Olaria",
+    "position": [-8.7562, -63.8969],
+    "totalClientes": 20,
+    "clientes": [
+      { "id": 120, "nome": "Cliente Porto 1", "position": [-8.7572, -63.8979] },
+      { "id": 229, "nome": "Loja de Pesca", "position": [-8.7560, -63.8960] }
+    ]
+  },
+  {
+    "id": 28,
+    "nome": "Rio Branco - Centro",
+    "position": [-9.9747, -67.8100],
+    "totalClientes": 18,
+    "clientes": [
+      { "id": 121, "nome": "Cliente Rio 1", "position": [-9.9757, -67.8110] },
+      { "id": 230, "nome": "Borracharia do Zé", "position": [-9.9740, -67.8100] }
+    ]
+  },
+  {
+    "id": 29,
+    "nome": "Boa Vista - Centro",
+    "position": [2.8235, -60.6758],
+    "totalClientes": 15,
+    "clientes": [
+      { "id": 122, "nome": "Cliente Boa 1", "position": [2.8245, -60.6768] },
+      { "id": 231, "nome": "Hotel Roraima", "position": [2.8230, -60.6750] }
+    ]
+  },
+  {
+    "id": 30,
+    "nome": "Macapá - Central",
+    "position": [0.0389, -51.0664],
+    "totalClientes": 22,
+    "clientes": [
+      { "id": 123, "nome": "Cliente Macapá 1", "position": [0.0399, -51.0674] },
+      { "id": 232, "nome": "Restaurante Meio do Mundo", "position": [0.0380, -51.0660] }
+    ]
+  },
+  {
+    "id": 31,
+    "nome": "Palmas - Plano Diretor Sul",
+    "position": [-10.2494, -48.3243],
+    "totalClientes": 31,
+    "clientes": [
+      { "id": 124, "nome": "Cliente Palmas 1", "position": [-10.2504, -48.3253] },
+      { "id": 233, "nome": "Papelaria Central", "position": [-10.2490, -48.3240] }
+    ]
+  },
+  {
+    "id": 32,
+    "nome": "Campinas - Cambuí",
+    "position": [-22.8943, -47.0519],
+    "totalClientes": 78,
+    "clientes": [
+      { "id": 125, "nome": "Cliente Campinas 1", "position": [-22.8953, -47.0529] },
+      { "id": 234, "nome": "Bar da Esquina", "position": [-22.8940, -47.0510] }
+    ]
+  },
+  {
+    "id": 33,
+    "nome": "Santos - Gonzaga",
+    "position": [-23.9692, -46.3386],
+    "totalClientes": 62,
+    "clientes": [
+      { "id": 126, "nome": "Cliente Santos 1", "position": [-23.9702, -46.3396] },
+      { "id": 235, "nome": "Quiosque da Praia", "position": [-23.9690, -46.3380] }
+    ]
+  },
+  {
+    "id": 34,
+    "nome": "Ribeirão Preto - Jardim Botânico",
+    "position": [-21.2117, -47.8122],
+    "totalClientes": 58,
+    "clientes": [
+      { "id": 127, "nome": "Cliente Ribeirão 1", "position": [-21.2127, -47.8132] },
+      { "id": 236, "nome": "Cervejaria Artesanal", "position": [-21.2110, -47.8120] }
+    ]
+  },
+  {
+    "id": 35,
+    "nome": "Uberlândia - Fundinho",
+    "position": [-18.9186, -48.2771],
+    "totalClientes": 48,
+    "clientes": [
+      { "id": 128, "nome": "Cliente Uberlândia 1", "position": [-18.9196, -48.2781] },
+      { "id": 237, "nome": "Loja de Eletrônicos", "position": [-18.9180, -48.2770] }
+    ]
+  },
+  {
+    "id": 36,
+    "nome": "Juiz de Fora - Centro",
+    "position": [-21.7645, -43.3503],
+    "totalClientes": 41,
+    "clientes": [
+      { "id": 129, "nome": "Cliente Juiz 1", "position": [-21.7655, -43.3513] },
+      { "id": 238, "nome": "Galeria de Arte", "position": [-21.7640, -43.3500] }
+    ]
+  },
+  {
+    "id": 37,
+    "nome": "Niterói - Icaraí",
+    "position": [-22.9068, -43.1039],
+    "totalClientes": 68,
+    "clientes": [
+      { "id": 130, "nome": "Cliente Niterói 1", "position": [-22.9078, -43.1049] },
+      { "id": 239, "nome": "Escola de Surf", "position": [-22.9060, -43.1030] }
+    ]
+  },
+  {
+    "id": 38,
+    "nome": "Londrina - Gleba Palhano",
+    "position": [-23.3364, -51.1895],
+    "totalClientes": 53,
+    "clientes": [
+      { "id": 131, "nome": "Cliente Londrina 1", "position": [-23.3374, -51.1905] },
+      { "id": 240, "nome": "Coworking Space", "position": [-23.3360, -51.1890] }
+    ]
+  },
+  {
+    "id": 39,
+    "nome": "Joinville - América",
+    "position": [-26.2917, -48.8583],
+    "totalClientes": 47,
+    "clientes": [
+      { "id": 132, "nome": "Cliente Joinville 1", "position": [-26.2927, -48.8593] },
+      { "id": 241, "nome": "Fábrica de Bicicletas", "position": [-26.2910, -48.8580] }
+    ]
+  },
+  {
+    "id": 40,
+    "nome": "Blumenau - Velha",
+    "position": [-26.9194, -49.0997],
+    "totalClientes": 44,
+    "clientes": [
+      { "id": 133, "nome": "Cliente Blumenau 1", "position": [-26.9204, -49.1007] },
+      { "id": 242, "nome": "Loja de Chocolates", "position": [-26.9190, -49.0990] }
+    ]
+  },
+  {
+    "id": 41,
+    "nome": "Caxias do Sul - Exposição",
+    "position": [-29.1678, -51.1789],
+    "totalClientes": 39,
+    "clientes": [
+      { "id": 134, "nome": "Cliente Caxias 1", "position": [-29.1688, -51.1799] },
+      { "id": 243, "nome": "Vinícola da Serra", "position": [-29.1670, -51.1780] }
+    ]
+  },
+  {
+    "id": 42,
+    "nome": "Pelotas - Centro",
+    "position": [-31.7719, -52.3426],
+    "totalClientes": 36,
+    "clientes": [
+      { "id": 135, "nome": "Cliente Pelotas 1", "position": [-31.7729, -52.3436] },
+      { "id": 244, "nome": "Doceria Fina", "position": [-31.7710, -52.3420] }
+    ]
+  },
+  {
+    "id": 43,
+    "nome": "Santa Maria - Centro",
+    "position": [-29.6842, -53.8069],
+    "totalClientes": 32,
+    "clientes": [
+      { "id": 136, "nome": "Cliente Santa 1", "position": [-29.6852, -53.8079] },
+      { "id": 245, "nome": "Loja de Artigos Militares", "position": [-29.6840, -53.8060] }
+    ]
+  },
+  {
+    "id": 44,
+    "nome": "Ponta Grossa - Centro",
+    "position": [-25.0945, -50.1633],
+    "totalClientes": 27,
+    "clientes": [
+      { "id": 137, "nome": "Cliente Ponta 1", "position": [-25.0955, -50.1643] },
+      { "id": 246, "nome": "Oficina Mecânica", "position": [-25.0940, -50.1630] }
+    ]
+  },
+  {
+    "id": 45,
+    "nome": "Cascavel - Centro",
+    "position": [-24.9555, -53.4552],
+    "totalClientes": 25,
+    "clientes": [
+      { "id": 138, "nome": "Cliente Cascavel 1", "position": [-24.9565, -53.4562] },
+      { "id": 247, "nome": "Loja de Equipamentos Agrícolas", "position": [-24.9550, -53.4550] }
+    ]
+  },
+  {
+    "id": 46,
+    "nome": "Marília - Centro",
+    "position": [-22.2175, -49.9475],
+    "totalClientes": 23,
+    "clientes": [
+      { "id": 139, "nome": "Cliente Marília 1", "position": [-22.2185, -49.9485] },
+      { "id": 248, "nome": "Fábrica de Biscoitos", "position": [-22.2170, -49.9470] }
+    ]
+  },
+  {
+    "id": 47,
+    "nome": "Bauru - Vila Universitária",
+    "position": [-22.3325, -49.0714],
+    "totalClientes": 34,
+    "clientes": [
+      { "id": 140, "nome": "Cliente Bauru 1", "position": [-22.3335, -49.0724] },
+      { "id": 249, "nome": "Lanchonete do Zé", "position": [-22.3320, -49.0710] }
+    ]
+  },
+  {
+    "id": 48,
+    "nome": "Anápolis - Jundiaí",
+    "position": [-16.3267, -48.9533],
+    "totalClientes": 41,
+    "clientes": [
+      { "id": 141, "nome": "Cliente Anápolis 1", "position": [-16.3277, -48.9543] },
+      { "id": 250, "nome": "Indústria Farmacêutica", "position": [-16.3260, -48.9530] }
+    ]
+  },
+  {
+    "id": 49,
+    "nome": "Vitória da Conquista - Candeias",
+    "position": [-14.8661, -40.8394],
+    "totalClientes": 37,
+    "clientes": [
+      { "id": 142, "nome": "Cliente Vitória 1", "position": [-14.8671, -40.8404] },
+      { "id": 251, "nome": "Casa de Shows", "position": [-14.8660, -40.8390] }
+    ]
+  },
+  {
+    "id": 50,
+    "nome": "Feira de Santana - Santa Mônica",
+    "position": [-12.2483, -38.9439],
+    "totalClientes": 26,
+    "clientes": [
+      { "id": 143, "nome": "Cliente Feira 1", "position": [-12.2493, -38.9449] },
+      { "id": 252, "nome": "Escola de Idiomas", "position": [-12.2480, -38.9430] }
+    ]
+  },
+  {
+    "id": 51,
+    "nome": "Campina Grande - Catolé",
+    "position": [-7.2429, -35.9083],
+    "totalClientes": 30,
+    "clientes": [
+      { "id": 144, "nome": "Cliente Campina 1", "position": [-7.2439, -35.9093] },
+      { "id": 253, "nome": "Loja de Roupas de Festa", "position": [-7.2420, -35.9080] }
+    ]
+  },
+  {
+    "id": 52,
+    "nome": "Caruaru - Maurício de Nassau",
+    "position": [-8.2833, -35.9764],
+    "totalClientes": 24,
+    "clientes": [
+      { "id": 145, "nome": "Cliente Caruaru 1", "position": [-8.2843, -35.9774] },
+      { "id": 254, "nome": "Ateliê de Artesanato", "position": [-8.2830, -35.9760] }
+    ]
+  },
+  {
+    "id": 53,
+    "nome": "Imperatriz - Centro",
+    "position": [-5.5261, -47.4756],
+    "totalClientes": 21,
+    "clientes": [
+      { "id": 146, "nome": "Cliente Imperatriz 1", "position": [-5.5271, -47.4766] },
+      { "id": 255, "nome": "Madeireira Legal", "position": [-5.5260, -47.4750] }
+    ]
+  },
+  {
+    "id": 54,
+    "nome": "Mossoró - Nova Betânia",
+    "position": [-5.1879, -37.3444],
+    "totalClientes": 29,
+    "clientes": [
+      { "id": 147, "nome": "Cliente Mossoró 1", "position": [-5.1889, -37.3454] },
+      { "id": 256, "nome": "Salina Diamante", "position": [-5.1870, -37.3440] }
+    ]
+  }
+]

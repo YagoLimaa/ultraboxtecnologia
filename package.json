@@ -2,17 +2,53 @@
   "name": "site-root",
   "private": true,
   "scripts": {
-    "dev": "npx concurrently \"npm:dev:frontend\" \"npm:dev:backend\"",
-    "dev:frontend": "npm --prefix site run dev",
-    "dev:backend": "npm --prefix backend run dev",
-    "build": "npm install && npm run build:frontend && cpx \"backend/functions/**\" \"site/build/functions\" && cpx \"backend/ws/**\" \"site/build/ws\"",
-    "build:frontend": "npm --prefix site run build"
+    "dev": "npx concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "set PORT=8788&& react-scripts start",
+    "dev:backend": "npx wrangler pages dev --compatibility-date=2024-01-01 --proxy 8788",
+    "build": "react-scripts build",
+    "start": "react-scripts start"
   },
   "engines": {
     "node": ">=14"
   },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^7.1.0",
+    "@fortawesome/free-brands-svg-icons": "^7.1.0",
+    "@fortawesome/react-fontawesome": "^3.1.1",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^13.5.0",
+    "abacatepay-mcp": "^1.0.8",
+    "abacatepay-nodejs-sdk": "^1.6.0",
+    "leaflet": "^1.9.4",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^7.12.0",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4"
+  },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240117.0",
+    "@types/node": "^25.0.8",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@types/react-leaflet": "^2.8.3",
+    "concurrently": "^9.2.1",
     "cpx": "^1.5.0",
-    "concurrently": "^9.2.1"
+    "typescript": "^4.9.5"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

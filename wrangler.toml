@@ -1,6 +1,6 @@
-name = "site"
-pages_build_output_dir = "site/build"
-functions = "backend/functions"
+name = "ultrabox"
+pages_build_output_dir = "build"
+functions = "functions"
 
 [[kv_namespaces]]
 binding = "PAYMENTS"

@@ -10,6 +10,7 @@ import PaymentSuccess from './components/PaymentSuccess.tsx';
 import PoliticaPrivacidade from './pages/PoliticaPrivacidade.tsx';
 import QuemSomos from './pages/QuemSomos.tsx';
 import PoliticaEntrega from './pages/PoliticaEntrega.tsx';
+import ScrollToTop from './components/ScrollToTop.tsx';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -17,6 +18,7 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<App />} />

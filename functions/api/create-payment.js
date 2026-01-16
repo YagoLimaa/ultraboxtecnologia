@@ -65,7 +65,6 @@ const generateMockPixResponse = (body) => {
   });
 };
 
-
 export async function onRequestPost(context) {
   console.log('create-payment function called');
   const { request, env } = context;
@@ -78,19 +77,26 @@ export async function onRequestPost(context) {
   }
 
   const body = await request.json();
+  const requestedMethod = (body.paymentMethod || 'PIX').toString().toUpperCase();
 
   try {
     const clientId = env.CLIENT_ID;
     const clientSecret = env.CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
-      console.error('API credentials (CLIENT_ID or CLIENT_SECRET) are not configured. Falling back to mock response.');
+      console.error('API credentials (CLIENT_ID or CLIENT_SECRET) are not configured.');
+      if (requestedMethod === 'BOLETO') {
+        return new Response(JSON.stringify({ error: 'API credentials not configured for boleto' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      }
       return generateMockPixResponse(body);
     }
 
     const authToken = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
-    const click2payApiUrl = 'https://apisandbox.click2pay.com.br/v1/transactions/pix';
 
+    // vendo qual tipo de pagamento para escolher a url correta
+    const method = (body.paymentMethod || 'PIX').toString().toUpperCase();
+
+    let click2payApiUrl = '';
     const options = {
       method: 'POST',
       headers: {
@@ -98,20 +104,41 @@ export async function onRequestPost(context) {
         'content-type': 'application/json',
         'authorization': authToken
       },
-      body: JSON.stringify({
+      body: null
+    };
+
+    if (method === 'BOLETO' || method === 'BOLETO_BANCARIO') {
+      click2payApiUrl = 'https://apisandbox.click2pay.com.br/v1/transactions/boleto';
+      options.body = JSON.stringify({
+        payerInfo: body.payerInfo,
+        payment_limit_days: body.payment_limit_days || body.paymentLimitDays || 3,
+        fine: body.fine || { mode: 'FIXED', start: 2 },
+        interest: body.interest || { mode: 'DAILY_AMOUNT' },
+        id: body.id,
+        totalAmount: body.totalAmount,
+        logo: body.logo
+      });
+    } else {
+      // pix padrão
+      click2payApiUrl = 'https://apisandbox.click2pay.com.br/v1/transactions/pix';
+      options.body = JSON.stringify({
         payerInfo: body.payerInfo,
         expiration: body.expiration || '86400',
-        returnQRCode: true, 
+        returnQRCode: true,
         id: body.id,
         totalAmount: body.totalAmount
-      })
-    };
+      });
+    }
 
     const apiResponse = await fetch(click2payApiUrl, options);
 
     if (apiResponse.status >= 500) {
       const errorText = await apiResponse.text();
       console.error(`Upstream API failed with status ${apiResponse.status}: ${errorText}`);
+      if (requestedMethod === 'BOLETO') {
+        const headers = { 'Content-Type': apiResponse.headers.get('content-type') || 'text/plain' };
+        return new Response(errorText, { status: apiResponse.status, headers });
+      }
       return generateMockPixResponse(body);
     }
 
@@ -119,28 +146,39 @@ export async function onRequestPost(context) {
       const errorBody = await apiResponse.text();
       console.error(`Error from Click2Pay API (Status: ${apiResponse.status}):`, errorBody);
 
-      return new Response(errorBody, {
-        status: apiResponse.status,
-        headers: apiResponse.headers,
-      });
+      const headers = { 'Content-Type': apiResponse.headers.get('content-type') || 'text/plain', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Authorization' };
+      return new Response(errorBody, { status: apiResponse.status, headers });
     }
 
     const responseData = await apiResponse.json();
     
     const frontendResponse = {
-      billingId: responseData?.data?.billing_id || responseData?.billing_id,
-      paymentUrl: responseData?.data?.payment_url || responseData?.payment_url,
+      billingId: responseData?.data?.billing_id || responseData?.billing_id || responseData?.data?.id || responseData?.id,
+      paymentUrl: responseData?.data?.payment_url || responseData?.payment_url || responseData?.data?.boleto?.url || responseData?.data?.boleto?.pdf || null,
       raw: responseData
     };
 
     return new Response(JSON.stringify(frontendResponse), {
       status: apiResponse.status,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Authorization' },
     });
 
   } catch (error) {
     console.error('Error in create-payment function:', error);
-
+    if (requestedMethod === 'BOLETO') {
+      return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
     return generateMockPixResponse(body);
   }
+}
+
+export function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    }
+  });
 }

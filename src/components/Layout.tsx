@@ -16,9 +16,7 @@ export default function Layout() {
       <nav className="fixed top-0 w-full z-50 bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center font-bold text-white">
-              U
-            </div>
+            <img src="/logo.png" alt="Ultrabox" className="w-8 h-8 rounded-lg object-cover" />
             <span className="text-lg font-bold text-white tracking-tight">
               ULTRABOX <span className="font-normal text-zinc-400">Tecnologia</span>
             </span>
@@ -46,9 +44,7 @@ export default function Layout() {
           <div className="grid md:grid-cols-2 gap-12 mb-16">
             <div>
               <div className="flex items-center gap-2 mb-6">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center font-bold text-white">
-                  U
-                </div>
+                <img src="/logo.png" alt="Ultrabox" className="w-8 h-8 rounded-lg object-cover" />
                 <span className="text-xl font-bold text-white">ULTRABOX</span>
               </div>
               <p className="text-zinc-200 mb-8 max-w-md leading-relaxed break-words">

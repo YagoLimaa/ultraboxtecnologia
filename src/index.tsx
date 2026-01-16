@@ -4,15 +4,15 @@ import './index.css';
 import App from './app.tsx';
 import './App.css';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import Layout from './component/Layout.tsx';
-import Checkout from './component/Checkout.tsx';
-import PaymentSuccess from './component/PaymentSuccess.tsx';
+import Layout from './components/Layout.tsx';
+import Checkout from './components/Checkout.tsx';
+import PaymentSuccess from './components/PaymentSuccess.tsx';
 import PoliticaPrivacidade from './pages/PoliticaPrivacidade.tsx';
 import QuemSomos from './pages/QuemSomos.tsx';
 import PoliticaEntrega from './pages/PoliticaEntrega.tsx';
 
 const root = ReactDOM.createRoot(
-  document.getElementById('root')
+  document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>

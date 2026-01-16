@@ -113,6 +113,18 @@ export default function Checkout() {
   const [autoOpened, setAutoOpened] = useState(false);
   const [pollError, setPollError] = useState<string | null>(null);
 
+  // reset payment-related state when starting a new payment or going back
+  function resetPaymentState() {
+    setPaymentLink(null);
+    setBillingId(null);
+    setPixPayload(null);
+    setBoletoBarcode(null);
+    setAutoOpened(false);
+    setPollError(null);
+    setError(null);
+    setIsLoading(false);
+  }
+
   useEffect(() => {
     const fetchAddress = async () => {
       const cep = customerAddressCep.replace(/\D/g, '');
@@ -206,6 +218,8 @@ export default function Checkout() {
 
   const handleCreatePayment = async () => {
     if (!certificate) return;
+    // clear any previous payment state to avoid showing stale QR/links
+    resetPaymentState();
     if (!customerName || !customerEmail || !customerTaxId) {
       setError('Preencha nome, email e CPF/CNPJ.');
       return;
@@ -298,7 +312,11 @@ export default function Checkout() {
 
         if (data.billingId) {
           setBillingId(data.billingId);
-          try { navigate(`?billingId=${encodeURIComponent(data.billingId)}`, { replace: true }); } catch {}
+          try {
+            if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+              window.history.replaceState(null, '', `?billingId=${encodeURIComponent(data.billingId)}`);
+            }
+          } catch {}
         }
         
         if (hasPaymentInfo) {
@@ -474,9 +492,10 @@ export default function Checkout() {
               </div>
             )}
 
-          <a 
-            href={paymentLink} 
-            rel="noreferrer" 
+          <a
+            href={paymentLink}
+            target={paymentMethod === 'BOLETO' ? '_blank' : undefined}
+            rel={paymentMethod === 'BOLETO' ? 'noreferrer noopener' : 'noreferrer'}
             onClick={() => { try { if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {} }}
             className="block w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors mb-4"
           >
@@ -506,7 +525,7 @@ export default function Checkout() {
         >
           {isLoading ? 'Verificando...' : 'Já paguei, confirmar pagamento'}
         </button>
-        <button onClick={() => setStep('details')} className="text-sm text-zinc-400 hover:text-white transition-colors">&larr; Voltar e alterar dados</button>
+        <button onClick={() => { resetPaymentState(); setStep('details'); }} className="text-sm text-zinc-400 hover:text-white transition-colors">&larr; Voltar e alterar dados</button>
       </div>
     </div>
   );

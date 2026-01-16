@@ -14,56 +14,7 @@ const crc16 = (data) => {
   }
   return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
 };
-const generateMockPixResponse = (body) => {
-  console.warn("Generating a mock PIX response due to an upstream API failure.");
-
-  const mockBillingId = `mock_${body.id || Date.now()}`;
-  
-  // trocar playload pix dps
-  const merchantName = 'NOME DA LOJA';
-  const merchantCity = 'CIDADE';
-  const pixKey = '12345678900';
-  const txid = (body.id || 'mocktx').substring(0, 25);
-  const amount = (body.totalAmount || 0).toFixed(2);
-
-  const payloadItems = [
-    formatTLV('00', '01'),
-    formatTLV('26', [
-      formatTLV('00', 'br.gov.bcb.pix'), 
-      formatTLV('01', pixKey)
-    ].join('')),
-    formatTLV('52', '0000'), 
-    formatTLV('53', '986'), 
-    formatTLV('54', amount), 
-    formatTLV('58', 'BR'),   
-    formatTLV('59', merchantName),
-    formatTLV('60', merchantCity),
-    formatTLV('62', formatTLV('05', txid)),
-  ];
-  
-  const payloadString = payloadItems.join('');
-  const payloadWithCrc = `${payloadString}6304${crc16(payloadString + '6304')}`;
-
-  const mockResponseData = {
-    success: true,
-    data: {
-      pix: {
-        textPayment: payloadWithCrc
-      }
-    }
-  };
-  
-  const frontendResponse = {
-    billingId: mockBillingId,
-    paymentUrl: null,
-    raw: mockResponseData
-  };
-
-  return new Response(JSON.stringify(frontendResponse), {
-    status: 200, 
-    headers: { 'Content-Type': 'application/json' },
-  });
-};
+// NOTE: mock PIX responses removed — function will return structured errors instead of mocks.
 
 export async function onRequestPost(context) {
   console.log('create-payment function called');
@@ -85,10 +36,7 @@ export async function onRequestPost(context) {
 
     if (!clientId || !clientSecret) {
       console.error('API credentials (CLIENT_ID or CLIENT_SECRET) are not configured.');
-      if (requestedMethod === 'BOLETO') {
-        return new Response(JSON.stringify({ error: 'API credentials not configured for boleto' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
-      }
-      return generateMockPixResponse(body);
+      return new Response(JSON.stringify({ error: 'API credentials not configured' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
 
     const authToken = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
@@ -139,7 +87,7 @@ export async function onRequestPost(context) {
         const headers = { 'Content-Type': apiResponse.headers.get('content-type') || 'text/plain' };
         return new Response(errorText, { status: apiResponse.status, headers });
       }
-      return generateMockPixResponse(body);
+      return new Response(JSON.stringify({ error: 'Upstream payment provider error' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
     }
 
     if (!apiResponse.ok) {
@@ -165,10 +113,7 @@ export async function onRequestPost(context) {
 
   } catch (error) {
     console.error('Error in create-payment function:', error);
-    if (requestedMethod === 'BOLETO') {
-      return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
-    }
-    return generateMockPixResponse(body);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }
 

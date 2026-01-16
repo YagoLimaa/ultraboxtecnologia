@@ -137,6 +137,14 @@ export default function Checkout() {
   }, [customerAddressCep]);
 
   useEffect(() => {
+    if (isLoading) {
+      try {
+        if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (e) {}
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
     const billingId = searchParams.get('billingId');
     if (billingId) {
       setIsLoading(true);
@@ -159,6 +167,9 @@ export default function Checkout() {
     let interval: number | undefined;
     if (step === 'payment' && billingId) {
       if (paymentLink && !autoOpened) {
+        try {
+          if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (e) {}
         try { window.location.href = paymentLink; } catch { try { window.location.assign(paymentLink); } catch {} }
         setAutoOpened(true);
       }
@@ -266,6 +277,9 @@ export default function Checkout() {
         }
         
         if (hasPaymentInfo) {
+          try {
+            if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
+          } catch (e) {}
           setStep('payment');
         } else {
           setError('Ocorreu um erro ao gerar os dados de pagamento.');
@@ -433,14 +447,15 @@ export default function Checkout() {
               </div>
             )}
 
-           <a 
+          <a 
             href={paymentLink} 
             target="_blank" 
             rel="noreferrer" 
-            className="block w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors mb-4"
+            onClick={() => { try { if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {} }}
+            className="block w/full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors mb-4"
           >
             {paymentMethod === 'BOLETO' ? 'Visualizar Boleto' : 'Pagar com Cartão'}
-           </a>
+          </a>
            
            <p className="text-sm text-zinc-500 mt-4">Você será redirecionado para um ambiente seguro.</p>
         </div>

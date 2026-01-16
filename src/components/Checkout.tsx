@@ -78,6 +78,10 @@ interface CreatePaymentResponse {
 
 interface ErrorResponse {
   error?: string;
+  errorMessage?: string;
+  errorDescription?: string;
+  errorCode?: string;
+  billingId?: string;
 }
 
 interface ViaCepResponse {
@@ -390,7 +394,21 @@ export default function Checkout() {
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           const errorData: ErrorResponse = await response.json();
-          setError(errorData.error || 'Ocorreu um erro ao processar o pagamento.');
+          
+          // Se houver billingId mesmo com erro (para permitir force-set-status em testes),
+          // avançar para a tela de pagamento
+          if (errorData.billingId && (paymentMethod === 'CARD' || paymentMethod === 'PIX')) {
+            setBillingId(errorData.billingId);
+            try {
+              if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', `?billingId=${encodeURIComponent(errorData.billingId)}`);
+              }
+            } catch {}
+            setStep('payment');
+            setError(errorData.errorMessage || errorData.error || 'Erro ao processar pagamento. Use o botão "Já paguei, confirmar pagamento" para testes.');
+          } else {
+            setError(errorData.errorMessage || errorData.error || 'Ocorreu um erro ao processar o pagamento.');
+          }
         } else {
           const errorText = await response.text();
           console.error('Server returned non-JSON response:', errorText);

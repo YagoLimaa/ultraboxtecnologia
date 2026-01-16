@@ -34,6 +34,28 @@ const maskCEP = (value: string): string => {
   return `${numbers.slice(0, 5)}-${numbers.slice(5, 8)}`;
 };
 
+const maskCardNumber = (value: string): string => {
+  const numbers = value.replace(/\D/g, '');
+  
+  if (numbers.length === 0) return '';
+  if (numbers.length <= 4) return numbers;
+  if (numbers.length <= 8) return `${numbers.slice(0, 4)} ${numbers.slice(4)}`;
+  if (numbers.length <= 12) return `${numbers.slice(0, 4)} ${numbers.slice(4, 8)} ${numbers.slice(8)}`;
+  return `${numbers.slice(0, 4)} ${numbers.slice(4, 8)} ${numbers.slice(8, 12)} ${numbers.slice(12, 16)}`;
+};
+
+const maskExpiration = (value: string): string => {
+  const numbers = value.replace(/\D/g, '');
+  
+  if (numbers.length === 0) return '';
+  if (numbers.length <= 2) return numbers;
+  return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}`;
+};
+
+const maskCVV = (value: string): string => {
+  return value.replace(/\D/g, '').slice(0, 4);
+};
+
 interface PaymentStatusResponse {
   status: 'PAID' | 'PENDING' | 'EXPIRED';
 }
@@ -105,6 +127,11 @@ export default function Checkout() {
   const [customerAddressCity, setCustomerAddressCity] = useState('');
   const [customerAddressState, setCustomerAddressState] = useState('');
 
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [cardCVV, setCardCVV] = useState('');
+  const [cardExpiration, setCardExpiration] = useState('');
+
   const [paymentMethod, setPaymentMethod] = useState<'PIX' | 'CARD' | 'BOLETO'>('PIX');
   const [paymentLink, setPaymentLink] = useState<string | null>(null);
   const [billingId, setBillingId] = useState<string | null>(null);
@@ -123,6 +150,10 @@ export default function Checkout() {
     setPollError(null);
     setError(null);
     setIsLoading(false);
+    setCardNumber('');
+    setCardName('');
+    setCardCVV('');
+    setCardExpiration('');
   }
 
   useEffect(() => {
@@ -225,6 +256,19 @@ export default function Checkout() {
       return;
     }
 
+    if (paymentMethod === 'BOLETO' && 
+        (!customerAddressCep || !customerAddressPlace || !customerAddressNumber || 
+         !customerAddressNeighborhood || !customerAddressCity || !customerAddressState)) {
+      setError('Preencha todos os campos do endereço de cobrança.');
+      return;
+    }
+
+    if (paymentMethod === 'CARD' && 
+        (!cardNumber || !cardName || !cardCVV || !cardExpiration)) {
+      setError('Preencha todos os dados do cartão.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -254,6 +298,12 @@ export default function Checkout() {
           } : undefined,
         },
         paymentMethod,
+        cardInfo: paymentMethod === 'CARD' ? {
+          number: cardNumber.replace(/\D/g, ''),
+          name: cardName,
+          cvv: cardCVV,
+          expiration: cardExpiration.replace(/\D/g, ''),
+        } : undefined,
         callbackAddress: `${getApiBaseUrl()}/api/webhook`,
       };
 
@@ -433,6 +483,30 @@ export default function Checkout() {
                 <div className="md:col-span-1">
                     <label className="block text-sm font-medium text-zinc-300 mb-2">Estado</label>
                     <input type="text" value={customerAddressState} onChange={(e) => setCustomerAddressState(e.target.value)} placeholder="UF" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+                </div>
+            </div>
+        </div>
+      )}
+
+      {paymentMethod === 'CARD' && (
+        <div className="space-y-4 mb-8 border-t border-zinc-800 pt-6 mt-6">
+            <h3 className="text-lg font-bold text-white mb-4">Dados do Cartão</h3>
+            <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">Número do Cartão</label>
+                <input type="text" value={cardNumber} onChange={(e) => setCardNumber(maskCardNumber(e.target.value))} placeholder="0000 0000 0000 0000" maxLength={19} className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">Nome no Cartão</label>
+                <input type="text" value={cardName} onChange={(e) => setCardName(e.target.value.toUpperCase())} placeholder="NOME COMO ESTÁ NO CARTÃO" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-zinc-300 mb-2">Validade</label>
+                    <input type="text" value={cardExpiration} onChange={(e) => setCardExpiration(maskExpiration(e.target.value))} placeholder="MM/AA" maxLength={5} className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-zinc-300 mb-2">CVV</label>
+                    <input type="text" value={cardCVV} onChange={(e) => setCardCVV(maskCVV(e.target.value))} placeholder="123" maxLength={4} className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
                 </div>
             </div>
         </div>

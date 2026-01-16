@@ -86,7 +86,7 @@ export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const certificate: Certificate = location.state?.certificate;
+  const certificate: Certificate | undefined = location.state?.certificate;
 
   const [step, setStep] = useState<Step>('details');
   const [isLoading, setIsLoading] = useState(false);
@@ -176,44 +176,53 @@ export default function Checkout() {
   }, [searchParams]);
 
   useEffect(() => {
-    let interval: number | undefined;
+    let timeoutId: number | undefined;
+    let stopped = false;
+    // exponential backoff: start at 5s, double up to 60s
+    let delay = 5000;
+    const maxDelay = 60000;
+
+    async function doPollOnce() {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${billingId}`);
+        if (res && res.ok) {
+          const json: PaymentStatusResponse = await res.json();
+          if (json.status === 'PAID') {
+            setStep('confirmation');
+            return;
+          }
+        }
+      } catch (e) {
+        // network or other error - ignore and backoff
+      }
+
+      if (!stopped) {
+        // increase delay (exponential/backoff) but keep it reasonable
+        delay = Math.min(maxDelay, delay * 2);
+        timeoutId = window.setTimeout(doPollOnce, delay);
+      }
+    }
+
     if (step === 'payment' && billingId) {
       if (paymentLink && !autoOpened) {
         try {
           if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (e) {}
         try {
-          // Don't navigate away to the raw QR image (it replaces the app and loses state).
-          // For PIX we already render the QR inline, so skip navigation. For boleto/cartão open in a new tab.
-          if (paymentMethod === 'PIX') {
-            // optionally: window.open(paymentLink, '_blank', 'noopener');
-          } else {
+          if (paymentMethod !== 'PIX') {
             window.open(paymentLink, '_blank', 'noopener');
           }
         } catch {
-          try {
-            if (paymentMethod !== 'PIX') window.location.assign(paymentLink);
-          } catch {}
+          try { if (paymentMethod !== 'PIX') window.location.assign(paymentLink); } catch {}
         }
         setAutoOpened(true);
       }
 
-      interval = window.setInterval(async () => {
-        try {
-          const res = await fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${billingId}`);
-          if (!res.ok) return;
-          const json: PaymentStatusResponse = await res.json();
-          if (json.status === 'PAID') {
-            setStep('confirmation');
-            if (interval) window.clearInterval(interval);
-          }
-        } catch (e) {
-          // controle pra net
-        }
-      }, 3000);
+      // start polling after initial delay
+      timeoutId = window.setTimeout(doPollOnce, delay);
     }
 
-    return () => { if (interval) window.clearInterval(interval); };
+    return () => { stopped = true; if (timeoutId) window.clearTimeout(timeoutId); };
   }, [step, billingId, paymentLink, autoOpened]);
 
   const handleCreatePayment = async () => {
@@ -254,7 +263,6 @@ export default function Checkout() {
           } : undefined,
         },
         paymentMethod,
-        callbackAddress: `${getApiBaseUrl()}/api/webhook`,
       };
 
       console.debug('[checkout] create-payment payload:', payload);
@@ -510,16 +518,45 @@ export default function Checkout() {
       {error && <p className="text-red-400 mt-4">{error}</p>}
       
       <div className="mt-6 border-t border-zinc-800 pt-6 flex flex-col items-center gap-4">
-        <button 
+        <button
           onClick={async () => {
-            if (!billingId) return;
-            setIsLoading(true); setPollError(null);
+            const targetBillingId = billingId || billingIdParam || undefined;
+            console.debug('[checkout] force-confirm clicked, billingId=', targetBillingId);
+            if (!targetBillingId) return;
+            setIsLoading(true);
+            setPollError(null);
             try {
-              const res = await fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${billingId}`);
+              const forceRes = await fetch(`${getApiBaseUrl()}/api/force-set-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ billingId: targetBillingId, status: 'PAID' }),
+              });
+
+              if (!forceRes.ok) {
+                const text = await forceRes.text().catch(() => '');
+                setPollError(`Falha ao forçar pagamento: ${text || forceRes.status}`);
+                return;
+              }
+
+              // Remover dps de forçar, verificar status real
+              const res = await fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${encodeURIComponent(targetBillingId)}`);
+              if (!res.ok) {
+                setPollError('Não foi possível verificar status após forçar.');
+                return;
+              }
               const json: PaymentStatusResponse = await res.json();
-              if (json.status === 'PAID') setStep('confirmation'); else setPollError('Pagamento ainda não confirmado. Tente novamente em alguns segundos.');
-            } catch (e) { setPollError('Erro ao verificar status do pagamento.'); } finally { setIsLoading(false); }
-          }} 
+              if (json.status === 'PAID') {
+                setStep('confirmation');
+              } else {
+                setPollError('Pagamento ainda não confirmado após forçar. Tente novamente.');
+              }
+            } catch (e) {
+              console.error('force-confirm error', e);
+              setPollError('Erro ao forçar/verificar pagamento.');
+            } finally {
+              setIsLoading(false);
+            }
+          }}
           className="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors disabled:opacity-50"
           disabled={isLoading}
         >
@@ -533,7 +570,7 @@ export default function Checkout() {
   const renderConfirmationStep = () => (
     <div className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-xl text-center">
       <h2 className="text-xl font-bold text-white mb-4">3. Pagamento Confirmado!</h2>
-      <p className="text-zinc-400 mb-6">Seu pagamento foi aprovado com sucesso. Em breve você receberá o seu certificado no email {customerEmail}.</p>
+      <p className="text-zinc-400 mb-6">Seu pagamento foi aprovado com sucesso. Em breve você será contatado no email {customerEmail}.</p>
       <button onClick={() => navigate('/')} className="block w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors mb-4">Ir para a página inicial</button>
     </div>
   );
@@ -553,19 +590,19 @@ export default function Checkout() {
               <h2 className="text-lg font-bold text-white mb-4">Resumo do Pedido</h2>
               <div className="space-y-4 pb-4 border-b border-zinc-800">
                 <div>
-                  <h3 className="text-white font-semibold mb-1">{certificate.title}</h3>
-                  <p className="text-sm text-zinc-400">{certificate.description}</p>
-                  <p className="text-xs text-zinc-500 mt-1">{certificate.validity}</p>
+                  <h3 className="text-white font-semibold mb-1">{certificate?.title}</h3>
+                  <p className="text-sm text-zinc-400">{certificate?.description}</p>
+                  <p className="text-xs text-zinc-500 mt-1">{certificate?.validity}</p>
                 </div>
               </div>
               <div className="mt-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-zinc-400">Subtotal</span>
-                  <span className="text-white font-semibold">{certificate.price}</span>
+                  <span className="text-white font-semibold">{certificate?.price}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-zinc-400">Total</span>
-                  <span className="text-2xl font-bold text-emerald-400">{certificate.price}</span>
+                  <span className="text-2xl font-bold text-emerald-400">{certificate?.price}</span>
                 </div>
               </div>
             </div>
@@ -576,3 +613,4 @@ export default function Checkout() {
     </section>
   );
 }
+

@@ -14,7 +14,6 @@ const crc16 = (data) => {
   }
   return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
 };
-// NOTE: mock PIX responses removed — function will return structured errors instead of mocks.
 
 export async function onRequestPost(context) {
   console.log('create-payment function called');
@@ -101,7 +100,7 @@ export async function onRequestPost(context) {
     const responseData = await apiResponse.json();
     
     const frontendResponse = {
-      billingId: responseData?.data?.billing_id || responseData?.billing_id || responseData?.data?.id || responseData?.id,
+      billingId: responseData?.data?.tid || responseData?.tid || responseData?.data?.billing_id || responseData?.billing_id || responseData?.data?.id || responseData?.id,
       paymentUrl: responseData?.data?.payment_url || responseData?.payment_url || responseData?.data?.boleto?.url || responseData?.data?.boleto?.pdf || null,
       raw: responseData
     };

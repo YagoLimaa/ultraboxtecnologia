@@ -170,7 +170,19 @@ export default function Checkout() {
         try {
           if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (e) {}
-        try { window.location.href = paymentLink; } catch { try { window.location.assign(paymentLink); } catch {} }
+        try {
+          // Don't navigate away to the raw QR image (it replaces the app and loses state).
+          // For PIX we already render the QR inline, so skip navigation. For boleto/cartão open in a new tab.
+          if (paymentMethod === 'PIX') {
+            // optionally: window.open(paymentLink, '_blank', 'noopener');
+          } else {
+            window.open(paymentLink, '_blank', 'noopener');
+          }
+        } catch {
+          try {
+            if (paymentMethod !== 'PIX') window.location.assign(paymentLink);
+          } catch {}
+        }
         setAutoOpened(true);
       }
 
@@ -263,6 +275,19 @@ export default function Checkout() {
             setPixPayload(txt);
             setPaymentLink(`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(txt)}&size=300x300`);
             hasPaymentInfo = true;
+          } else if (data.paymentUrl) {
+            // some providers return a QR image url like: https://api.qrserver.com/...?data=ENCODED
+            const match = String(data.paymentUrl).match(/[?&]data=([^&]+)/);
+            if (match && match[1]) {
+              try {
+                const decoded = decodeURIComponent(match[1]);
+                setPixPayload(decoded);
+                setPaymentLink(data.paymentUrl);
+                hasPaymentInfo = true;
+              } catch (e) {
+                // ignore parse errors
+              }
+            }
           }
         } else { // cartao a ser feito
           if (data.paymentUrl) {
@@ -449,10 +474,9 @@ export default function Checkout() {
 
           <a 
             href={paymentLink} 
-            target="_blank" 
             rel="noreferrer" 
             onClick={() => { try { if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {} }}
-            className="block w/full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors mb-4"
+            className="block w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors mb-4"
           >
             {paymentMethod === 'BOLETO' ? 'Visualizar Boleto' : 'Pagar com Cartão'}
           </a>

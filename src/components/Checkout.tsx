@@ -328,7 +328,9 @@ export default function Checkout() {
     }
   };
 
-  if (!certificate) {
+  const billingIdParam = searchParams.get('billingId');
+
+  if (!certificate && !billingIdParam) {
     return (
       <div className="pt-32 pb-20 px-6 min-h-screen flex items-center justify-center">
         <div className="text-center">

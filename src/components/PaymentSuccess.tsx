@@ -108,7 +108,7 @@ export default function PaymentSuccess() {
             <button onClick={() => {
               if (!billingId && !sessionId) return;
               const q = sessionId ? `session=${encodeURIComponent(sessionId)}` : `billingId=${encodeURIComponent(billingId || '')}`;
-              fetch(`${getApiBaseUrl()}/api/get-payment-status?${q}`, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } }).then(r => r.json()).then(d => setPaymentStatus(d.status)).catch(() => setError('Erro ao verificar status'));
+              fetch(`${getApiBaseUrl()}/api/get-payment-status?${q}`, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } }).then(r => r.json()).then((d: any) => setPaymentStatus(d.status)).catch(() => setError('Erro ao verificar status'));
             }} className="px-3 py-2 bg-zinc-800 text-white rounded-md">Verificar agora</button>
             <button onClick={() => navigate('/')} className="px-3 py-2 ml-2 bg-zinc-700 text-white rounded-md">Ir para a loja</button>
           </div>
@@ -134,7 +134,7 @@ function UploadForm({ billingId }: { billingId: string }) {
         method: 'POST',
         body: form,
       });
-      const data = await res.json();
+      const data = await res.json() as any;
       console.log('upload response', { status: res.status, data });
       if (!res.ok) {
         setStatus(data?.error || 'Falha no upload');

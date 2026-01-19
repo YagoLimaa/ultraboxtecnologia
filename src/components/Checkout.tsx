@@ -1,60 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Certificate } from '../data/products.ts';
 import { getApiBaseUrl } from '../utils.ts';
+import { useCheckout } from '../hooks/useCheckout';
+import CustomerDetails from './checkout/CustomerDetails';
+import PaymentMethodFields from './checkout/PaymentMethodFields';
+import CardFields from './checkout/CardFields';
+import BoletoFields from './checkout/BoletoFields';
+import PaymentPreview from './checkout/PaymentPreview';
 
 type Step = 'details' | 'payment' | 'confirmation';
-
-// Mask functions
-const maskPhone = (value: string): string => {
-  const numbers = value.replace(/\D/g, '');
-  
-  if (numbers.length === 0) return '';
-  if (numbers.length <= 2) return `(${numbers}`;
-  if (numbers.length <= 6) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-  if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
-  return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
-};
-
-const maskCPF = (value: string): string => {
-  const numbers = value.replace(/\D/g, '');
-  
-  if (numbers.length === 0) return '';
-  if (numbers.length <= 3) return numbers;
-  if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
-  if (numbers.length <= 9) return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
-  return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
-};
-
-const maskCEP = (value: string): string => {
-  const numbers = value.replace(/\D/g, '');
-
-  if (numbers.length === 0) return '';
-  if (numbers.length <= 5) return numbers;
-  return `${numbers.slice(0, 5)}-${numbers.slice(5, 8)}`;
-};
-
-const maskCardNumber = (value: string): string => {
-  const numbers = value.replace(/\D/g, '');
-  
-  if (numbers.length === 0) return '';
-  if (numbers.length <= 4) return numbers;
-  if (numbers.length <= 8) return `${numbers.slice(0, 4)} ${numbers.slice(4)}`;
-  if (numbers.length <= 12) return `${numbers.slice(0, 4)} ${numbers.slice(4, 8)} ${numbers.slice(8)}`;
-  return `${numbers.slice(0, 4)} ${numbers.slice(4, 8)} ${numbers.slice(8, 12)} ${numbers.slice(12, 16)}`;
-};
-
-const maskExpiration = (value: string): string => {
-  const numbers = value.replace(/\D/g, '');
-  
-  if (numbers.length === 0) return '';
-  if (numbers.length <= 2) return numbers;
-  return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}`;
-};
-
-const maskCVV = (value: string): string => {
-  return value.replace(/\D/g, '').slice(0, 4);
-};
 
 interface PaymentStatusResponse {
   status: 'PAID' | 'PENDING' | 'EXPIRED';
@@ -92,98 +47,43 @@ interface ViaCepResponse {
   erro?: boolean;
 }
 
-function sanitizeId(input: string) {
-  return input.replace(/[^a-zA-Z0-9_\-|]/g, '');
-}
-
-function formatAmount(priceStr: string) {
-  if (!priceStr) return 0;
-  let s = String(priceStr).trim();
-  s = s.replace(/[^0-9,.]/g, '');
-  if (s.includes(',') && !s.includes('.')) s = s.replace(/,/, '.');
-  if (s.includes('.') && s.indexOf('.') !== s.lastIndexOf('.')) {
-    s = s.replace(/\.(?=.*\.)/g, '');
-  }
-  const n = parseFloat(s);
-  return Number.isFinite(n) ? n : 0;
-}
-
 export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const certificate: Certificate | undefined = location.state?.certificate;
 
-  const [step, setStep] = useState<Step>('details');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const hook = useCheckout(certificate);
 
-  const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [customerCellphone, setCustomerCellphone] = useState('');
-  const [customerTaxId, setCustomerTaxId] = useState('');
+  const {
+    customerName, setCustomerName,
+    customerEmail, setCustomerEmail,
+    customerCellphone, setCustomerCellphone,
+    customerTaxId, setCustomerTaxId,
 
-  const [customerAddressCep, setCustomerAddressCep] = useState('');
-  const [customerAddressPlace, setCustomerAddressPlace] = useState('');
-  const [customerAddressNumber, setCustomerAddressNumber] = useState('');
-  const [customerAddressComplement, setCustomerAddressComplement] = useState('');
-  const [customerAddressNeighborhood, setCustomerAddressNeighborhood] = useState('');
-  const [customerAddressCity, setCustomerAddressCity] = useState('');
-  const [customerAddressState, setCustomerAddressState] = useState('');
+    customerAddressCep, setCustomerAddressCep,
+    customerAddressPlace, setCustomerAddressPlace,
+    customerAddressNumber, setCustomerAddressNumber,
+    customerAddressComplement, setCustomerAddressComplement,
+    customerAddressNeighborhood, setCustomerAddressNeighborhood,
+    customerAddressCity, setCustomerAddressCity,
+    customerAddressState, setCustomerAddressState,
 
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [cardCVV, setCardCVV] = useState('');
-  const [cardExpiration, setCardExpiration] = useState('');
+    cardNumber, setCardNumber,
+    cardName, setCardName,
+    cardCVV, setCardCVV,
+    cardExpiration, setCardExpiration,
 
-  const [paymentMethod, setPaymentMethod] = useState<'PIX' | 'CARD' | 'BOLETO'>('PIX');
-  const [paymentLink, setPaymentLink] = useState<string | null>(null);
-  const [billingId, setBillingId] = useState<string | null>(null);
-  const [pixPayload, setPixPayload] = useState<string | null>(null);
-  const [boletoBarcode, setBoletoBarcode] = useState<string | null>(null);
-  const [autoOpened, setAutoOpened] = useState(false);
-  const [pollError, setPollError] = useState<string | null>(null);
+    paymentMethod, setPaymentMethod,
+    paymentLink, billingId, pixPayload, boletoBarcode,
+    isLoading, error, resetPaymentState, handleCreatePayment,
+    billingIdParam
+  } = hook;
 
-  // reset payment-related state when starting a new payment or going back
-  function resetPaymentState() {
-    setPaymentLink(null);
-    setBillingId(null);
-    setPixPayload(null);
-    setBoletoBarcode(null);
-    setAutoOpened(false);
-    setPollError(null);
-    setError(null);
-    setIsLoading(false);
-    setCardNumber('');
-    setCardName('');
-    setCardCVV('');
-    setCardExpiration('');
-  }
+  const [step, setStep] = React.useState<Step>('details');
+  const [pollError, setPollError] = React.useState<string | null>(null);
+  const [autoOpened, setAutoOpened] = React.useState(false);
 
-  useEffect(() => {
-    const fetchAddress = async () => {
-      const cep = customerAddressCep.replace(/\D/g, '');
-      if (cep.length === 8) {
-        try {
-          const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-          if (response.ok) {
-            const data: ViaCepResponse = await response.json();
-            if (!data.erro) {
-              setCustomerAddressPlace(data.logradouro);
-              setCustomerAddressNeighborhood(data.bairro);
-              setCustomerAddressCity(data.localidade);
-              setCustomerAddressState(data.uf);
-            }
-          }
-        } catch (error) {
-          console.error("Failed to fetch address from CEP", error);
-        }
-      }
-    };
-    fetchAddress();
-  }, [customerAddressCep]);
-
-  useEffect(() => {
+  React.useEffect(() => {
     if (isLoading) {
       try {
         if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -191,29 +91,25 @@ export default function Checkout() {
     }
   }, [isLoading]);
 
-  useEffect(() => {
-    const billingId = searchParams.get('billingId');
+  React.useEffect(() => {
+    const billingId = billingIdParam;
     if (billingId) {
-      setIsLoading(true);
-      fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${billingId}`)
-        .then(res => res.json())
-        .then((data: PaymentStatusResponse) => {
-          if (data.status === 'PAID') {
-            setStep('confirmation');
-          } else {
-            setError('O pagamento ainda não foi confirmado. Tente novamente em alguns instantes.');
-            setStep('payment');
+      (async () => {
+        try {
+          setPollError(null);
+          const res = await fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${billingId}`);
+          if (res && res.ok) {
+            const data: PaymentStatusResponse = await res.json();
+            if (data.status === 'PAID') setStep('confirmation'); else { setPollError('O pagamento ainda não foi confirmado. Tente novamente em alguns instantes.'); setStep('payment'); }
           }
-        })
-        .catch(() => setError('Não foi possível verificar o status do seu pagamento.'))
-        .finally(() => setIsLoading(false));
+        } catch (e) { setPollError('Não foi possível verificar o status do seu pagamento.'); }
+      })();
     }
-  }, [searchParams]);
+  }, [billingIdParam]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     let timeoutId: number | undefined;
     let stopped = false;
-    // exponential backoff: start at 5s, double up to 60s
     let delay = 5000;
     const maxDelay = 60000;
 
@@ -222,208 +118,24 @@ export default function Checkout() {
         const res = await fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${billingId}`);
         if (res && res.ok) {
           const json: PaymentStatusResponse = await res.json();
-          if (json.status === 'PAID') {
-            setStep('confirmation');
-            return;
-          }
+          if (json.status === 'PAID') { setStep('confirmation'); return; }
         }
-      } catch (e) {
-        // network or other error - ignore and backoff
-      }
-
-      if (!stopped) {
-        // increase delay (exponential/backoff) but keep it reasonable
-        delay = Math.min(maxDelay, delay * 2);
-        timeoutId = window.setTimeout(doPollOnce, delay);
-      }
+      } catch (e) {}
+      if (!stopped) { delay = Math.min(maxDelay, delay * 2); timeoutId = window.setTimeout(doPollOnce, delay); }
     }
 
     if (step === 'payment' && billingId) {
       if (paymentLink && !autoOpened) {
-        try {
-          if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
-        } catch (e) {}
-        try {
-          if (paymentMethod !== 'PIX') {
-            window.open(paymentLink, '_blank', 'noopener');
-          }
-        } catch {
-          try { if (paymentMethod !== 'PIX') window.location.assign(paymentLink); } catch {}
-        }
+        try { if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {}
         setAutoOpened(true);
       }
-
-      // start polling after initial delay
       timeoutId = window.setTimeout(doPollOnce, delay);
     }
 
     return () => { stopped = true; if (timeoutId) window.clearTimeout(timeoutId); };
-  }, [step, billingId, paymentLink, autoOpened]);
+  }, [step, billingId, paymentLink]);
 
-  const handleCreatePayment = async () => {
-    if (!certificate) return;
-    // clear any previous payment state to avoid showing stale QR/links
-    resetPaymentState();
-    if (!customerName || !customerEmail || !customerTaxId) {
-      setError('Preencha nome, email e CPF/CNPJ.');
-      return;
-    }
-
-    if (paymentMethod === 'BOLETO' && 
-        (!customerAddressCep || !customerAddressPlace || !customerAddressNumber || 
-         !customerAddressNeighborhood || !customerAddressCity || !customerAddressState)) {
-      setError('Preencha todos os campos do endereço de cobrança.');
-      return;
-    }
-
-    if (paymentMethod === 'CARD' && 
-        (!cardNumber || !cardName || !cardCVV || !cardExpiration)) {
-      setError('Preencha todos os dados do cartão.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    const rawId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ? (crypto as any).randomUUID() : `tx-${Date.now()}`;
-    const externalId = sanitizeId(rawId);
-
-    const amount = formatAmount(certificate.price);
-
-    try {
-      const payload = {
-        id: externalId,
-        totalAmount: amount,
-        description: certificate.title,
-        payerInfo: {
-          name: customerName,
-          taxid: customerTaxId,
-          phonenumber: customerCellphone,
-          email: customerEmail,
-          address: paymentMethod === 'BOLETO' ? {
-            zipcode: customerAddressCep.replace(/\D/g, ''),
-            place: customerAddressPlace,
-            number: customerAddressNumber,
-            complement: customerAddressComplement,
-            neighborhood: customerAddressNeighborhood,
-            city: customerAddressCity,
-            state: customerAddressState,
-          } : undefined,
-        },
-        paymentMethod,
-        cardInfo: paymentMethod === 'CARD' ? {
-          number: cardNumber.replace(/\D/g, ''),
-          name: cardName,
-          cvv: cardCVV,
-          expiration: cardExpiration.replace(/\D/g, ''),
-        } : undefined,
-        callbackAddress: `${getApiBaseUrl()}/api/webhook`,
-      };
-
-      console.debug('[checkout] create-payment payload:', payload);
-
-      const response = await fetch(`${getApiBaseUrl()}/api/create-payment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      console.debug('[checkout] create-payment response status:', response.status);
-
-      if (response.ok) {
-        const data: CreatePaymentResponse = await response.json();
-        console.debug('[checkout] create-payment response body:', data);
-        
-        let hasPaymentInfo = false;
-
-        // dependendo do metodo ele muda a url
-        if (paymentMethod === 'BOLETO') {
-          const url = data.paymentUrl || data.raw?.data?.boleto?.url;
-          if (url) {
-            setPaymentLink(url);
-            hasPaymentInfo = true;
-          }
-          if (data.raw?.data?.boleto?.barcode) {
-            setBoletoBarcode(data.raw.data.boleto.barcode);
-          }
-        } else if (paymentMethod === 'PIX') {
-          if (data.raw?.data?.pix?.textPayment) {
-            const txt = data.raw.data.pix.textPayment;
-            setPixPayload(txt);
-            setPaymentLink(`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(txt)}&size=300x300`);
-            hasPaymentInfo = true;
-          } else if (data.paymentUrl) {
-            // some providers return a QR image url like: https://api.qrserver.com/...?data=ENCODED
-            const match = String(data.paymentUrl).match(/[?&]data=([^&]+)/);
-            if (match && match[1]) {
-              try {
-                const decoded = decodeURIComponent(match[1]);
-                setPixPayload(decoded);
-                setPaymentLink(data.paymentUrl);
-                hasPaymentInfo = true;
-              } catch (e) {
-                // ignore parse errors
-              }
-            }
-          }
-        } else { // cartao a ser feito
-          if (data.paymentUrl) {
-            setPaymentLink(data.paymentUrl);
-            hasPaymentInfo = true;
-          }
-        }
-
-        if (data.billingId) {
-          setBillingId(data.billingId);
-          try {
-            if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
-              window.history.replaceState(null, '', `?billingId=${encodeURIComponent(data.billingId)}`);
-            }
-          } catch {}
-        }
-        
-        if (hasPaymentInfo) {
-          try {
-            if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
-          } catch (e) {}
-          setStep('payment');
-        } else {
-          setError('Ocorreu um erro ao gerar os dados de pagamento.');
-        }
-      } else {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const errorData: ErrorResponse = await response.json();
-          
-          // Se houver billingId mesmo com erro (para permitir force-set-status em testes),
-          // avançar para a tela de pagamento
-          if (errorData.billingId && (paymentMethod === 'CARD' || paymentMethod === 'PIX')) {
-            setBillingId(errorData.billingId);
-            try {
-              if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
-                window.history.replaceState(null, '', `?billingId=${encodeURIComponent(errorData.billingId)}`);
-              }
-            } catch {}
-            setStep('payment');
-            setError(errorData.errorMessage || errorData.error || 'Erro ao processar pagamento. Use o botão "Já paguei, confirmar pagamento" para testes.');
-          } else {
-            setError(errorData.errorMessage || errorData.error || 'Ocorreu um erro ao processar o pagamento.');
-          }
-        } else {
-          const errorText = await response.text();
-          console.error('Server returned non-JSON response:', errorText);
-          setError(`Ocorreu um erro inesperado do servidor (${response.status}). Por favor, tente novamente mais tarde.`);
-        }
-      }
-    } catch (err) {
-      console.error(err);
-      setError(`Ocorreu um erro ao processar o pagamento: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const billingIdParam = searchParams.get('billingId');
+  
 
   if (!certificate && !billingIdParam) {
     return (
@@ -437,227 +149,33 @@ export default function Checkout() {
   }
 
   const renderDetailsStep = () => (
-    <div className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-xl">
-      <h2 className="text-xl font-bold text-white mb-6">1. Seus Dados</h2>
-      <div className="space-y-4 mb-8">
-        <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-2">Nome Completo</label>
-          <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Seu nome completo" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-2">Email</label>
-          <input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="seu@email.com" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-2">Celular</label>
-            <input type="tel" value={customerCellphone} onChange={(e) => setCustomerCellphone(maskPhone(e.target.value))} placeholder="(11) 99999-9999" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-2">CPF</label>
-            <input type="text" value={customerTaxId} onChange={(e) => setCustomerTaxId(maskCPF(e.target.value))} placeholder="000.000.000-00" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-          </div>
-        </div>
+    <div>
+      <CustomerDetails customerName={customerName} setCustomerName={setCustomerName} customerEmail={customerEmail} setCustomerEmail={setCustomerEmail} customerCellphone={customerCellphone} setCustomerCellphone={setCustomerCellphone} customerTaxId={customerTaxId} setCustomerTaxId={setCustomerTaxId} />
+      <div className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-xl mt-6">
+        <h2 className="text-xl font-bold text-white mb-6">2. Método de Pagamento</h2>
+        <PaymentMethodFields paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} />
+        {paymentMethod === 'BOLETO' && <BoletoFields customerAddressCep={customerAddressCep} setCustomerAddressCep={setCustomerAddressCep} customerAddressPlace={customerAddressPlace} setCustomerAddressPlace={setCustomerAddressPlace} customerAddressNumber={customerAddressNumber} setCustomerAddressNumber={setCustomerAddressNumber} customerAddressComplement={customerAddressComplement} setCustomerAddressComplement={setCustomerAddressComplement} customerAddressNeighborhood={customerAddressNeighborhood} setCustomerAddressNeighborhood={setCustomerAddressNeighborhood} customerAddressCity={customerAddressCity} setCustomerAddressCity={setCustomerAddressCity} customerAddressState={customerAddressState} setCustomerAddressState={setCustomerAddressState} />}
+        {paymentMethod === 'CARD' && <CardFields cardNumber={cardNumber} setCardNumber={setCardNumber} cardName={cardName} setCardName={setCardName} cardCVV={cardCVV} setCardCVV={setCardCVV} cardExpiration={cardExpiration} setCardExpiration={setCardExpiration} />}
+
+        <button onClick={async () => { await handleCreatePayment(); if (!error) setStep('payment'); }} disabled={isLoading} className="w-full mt-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-lg transition-colors disabled:opacity-50">{isLoading ? 'Aguarde...' : 'Finalizar Pedido'}</button>
+        {error && <p className="text-red-400 mt-4">{error}</p>}
       </div>
-      <h2 className="text-xl font-bold text-white mb-6">2. Método de Pagamento</h2>
-      <div className="space-y-4 mb-8">
-        <label className="flex items-center space-x-3 bg-zinc-950 border border-zinc-800 rounded-lg p-4 cursor-pointer hover:border-emerald-500/50 transition-colors">
-          <input type="radio" name="paymentMethod" value="PIX" checked={paymentMethod === 'PIX'} onChange={() => setPaymentMethod('PIX')} className="form-radio text-emerald-500 focus:ring-emerald-500" />
-          <span className="text-white font-medium">Pix</span>
-        </label>
-        <label className="flex items-center space-x-3 bg-zinc-950 border border-zinc-800 rounded-lg p-4 cursor-pointer hover:border-emerald-500/50 transition-colors">
-          <input type="radio" name="paymentMethod" value="CARD" checked={paymentMethod === 'CARD'} onChange={() => setPaymentMethod('CARD')} className="form-radio text-emerald-500 focus:ring-emerald-500" />
-          <span className="text-white font-medium">Cartão de Crédito</span>
-        </label>
-        <label className="flex items-center space-x-3 bg-zinc-950 border border-zinc-800 rounded-lg p-4 cursor-pointer hover:border-emerald-500/50 transition-colors">
-          <input type="radio" name="paymentMethod" value="BOLETO" checked={paymentMethod === 'BOLETO'} onChange={() => setPaymentMethod('BOLETO')} className="form-radio text-emerald-500 focus:ring-emerald-500" />
-          <span className="text-white font-medium">Boleto Bancário</span>
-        </label>
-      </div>
-
-      {paymentMethod === 'BOLETO' && (
-        <div className="space-y-4 mb-8 border-t border-zinc-800 pt-6 mt-6">
-            <h3 className="text-lg font-bold text-white mb-4">Endereço de Cobrança</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-1">
-                <label className="block text-sm font-medium text-zinc-300 mb-2">CEP</label>
-                <input type="text" value={customerAddressCep} onChange={(e) => setCustomerAddressCep(maskCEP(e.target.value))} placeholder="00000-000" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Endereço</label>
-                    <input type="text" value={customerAddressPlace} onChange={(e) => setCustomerAddressPlace(e.target.value)} placeholder="Rua, Av, etc." className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Número</label>
-                    <input type="text" value={customerAddressNumber} onChange={(e) => setCustomerAddressNumber(e.target.value)} placeholder="123" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-                </div>
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Complemento</label>
-                <input type="text" value={customerAddressComplement} onChange={(e) => setCustomerAddressComplement(e.target.value)} placeholder="Apto, Bloco, etc. (Opcional)" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-1">
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Bairro</label>
-                    <input type="text" value={customerAddressNeighborhood} onChange={(e) => setCustomerAddressNeighborhood(e.target.value)} placeholder="Seu bairro" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-                </div>
-                <div className="md:col-span-1">
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Cidade</label>
-                    <input type="text" value={customerAddressCity} onChange={(e) => setCustomerAddressCity(e.target.value)} placeholder="Sua cidade" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-                </div>
-                <div className="md:col-span-1">
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Estado</label>
-                    <input type="text" value={customerAddressState} onChange={(e) => setCustomerAddressState(e.target.value)} placeholder="UF" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-                </div>
-            </div>
-        </div>
-      )}
-
-      {paymentMethod === 'CARD' && (
-        <div className="space-y-4 mb-8 border-t border-zinc-800 pt-6 mt-6">
-            <h3 className="text-lg font-bold text-white mb-4">Dados do Cartão</h3>
-            <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Número do Cartão</label>
-                <input type="text" value={cardNumber} onChange={(e) => setCardNumber(maskCardNumber(e.target.value))} placeholder="0000 0000 0000 0000" maxLength={19} className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Nome no Cartão</label>
-                <input type="text" value={cardName} onChange={(e) => setCardName(e.target.value.toUpperCase())} placeholder="NOME COMO ESTÁ NO CARTÃO" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Validade</label>
-                    <input type="text" value={cardExpiration} onChange={(e) => setCardExpiration(maskExpiration(e.target.value))} placeholder="MM/AA" maxLength={5} className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">CVV</label>
-                    <input type="text" value={cardCVV} onChange={(e) => setCardCVV(maskCVV(e.target.value))} placeholder="123" maxLength={4} className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
-                </div>
-            </div>
-        </div>
-      )}
-
-      <button onClick={handleCreatePayment} disabled={isLoading} className="w-full mt-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-lg transition-colors disabled:opacity-50">{isLoading ? 'Aguarde...' : 'Finalizar Pedido'}</button>
-      {error && <p className="text-red-400 mt-4">{error}</p>}
     </div>
   );
 
   const renderPaymentStep = () => (
-    <div className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-xl text-center">
-      <h2 className="text-xl font-bold text-white mb-4">2. Pagamento</h2>
-
-      {/* PIX Payment Flow */}
-      {pixPayload && (
-        <div className="flex flex-col items-center">
-          {paymentLink && (
-            <img src={paymentLink} alt="PIX QR Code" className="w-64 h-64 bg-white rounded-lg p-2 mx-auto" />
-          )}
-          <p className="text-yellow-400 animate-pulse mt-4 font-semibold">Aguardando pagamento...</p>
-          
-          <div className="mt-6 w-full max-w-sm">
-            <p className="text-sm text-zinc-400 mb-2">Ou copie o código PIX:</p>
-            <pre className="bg-zinc-950 p-3 rounded text-xs text-zinc-200 overflow-x-auto text-left">{pixPayload}</pre>
-            <button 
-              onClick={async () => { 
-                await navigator.clipboard.writeText(pixPayload); 
-                alert('Código PIX copiado!');
-              }} 
-              className="w-full mt-2 px-3 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-colors"
-            >
-              Copiar código
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Card/Boleto Payment Flow */}
-      {!pixPayload && paymentLink && (
-        <div>
-           <p className="text-zinc-400 mb-6">Clique no botão abaixo para {paymentMethod === 'BOLETO' ? 'visualizar o boleto' : 'ser redirecionado à página de pagamento'}.</p>
-           
-           {paymentMethod === 'BOLETO' && boletoBarcode && (
-              <div className="mb-6 w-full max-w-sm mx-auto">
-                  <p className="text-sm text-zinc-40ax-w-sm mx-auto0 mb-2">Copie o código de barras para pagar:</p>
-                  <pre className="bg-zinc-950 p-3 rounded text-xs text-zinc-200 overflow-x-auto text-left">{boletoBarcode}</pre>
-                  <button 
-                  onClick={async () => { 
-                      await navigator.clipboard.writeText(boletoBarcode); 
-                      alert('Código de barras copiado!');
-                  }} 
-                  className="w-full mt-2 px-3 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-lg transition-colors"
-                  >
-                  Copiar código de barras
-                  </button>
-              </div>
-            )}
-
-          <a
-            href={paymentLink}
-            target={paymentMethod === 'BOLETO' ? '_blank' : undefined}
-            rel={paymentMethod === 'BOLETO' ? 'noreferrer noopener' : 'noreferrer'}
-            onClick={() => { try { if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {} }}
-            className="block w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors mb-4"
-          >
-            {paymentMethod === 'BOLETO' ? 'Visualizar Boleto' : 'Pagar com Cartão'}
-          </a>
-           
-           <p className="text-sm text-zinc-500 mt-4">Você será redirecionado para um ambiente seguro.</p>
-        </div>
-      )}
-
-      {pollError && <p className="text-red-400 mt-4">{pollError}</p>}
-      {error && <p className="text-red-400 mt-4">{error}</p>}
-      
-      <div className="mt-6 border-t border-zinc-800 pt-6 flex flex-col items-center gap-4">
-        <button
-          onClick={async () => {
-            const targetBillingId = billingId || billingIdParam || undefined;
-            console.debug('[checkout] force-confirm clicked, billingId=', targetBillingId);
-            if (!targetBillingId) return;
-            setIsLoading(true);
-            setPollError(null);
-            try {
-              const forceRes = await fetch(`${getApiBaseUrl()}/api/force-set-status`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ billingId: targetBillingId, status: 'PAID' }),
-              });
-
-              if (!forceRes.ok) {
-                const text = await forceRes.text().catch(() => '');
-                setPollError(`Falha ao forçar pagamento: ${text || forceRes.status}`);
-                return;
-              }
-
-              // Remover dps de forçar, verificar status real
-              const res = await fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${encodeURIComponent(targetBillingId)}`);
-              if (!res.ok) {
-                setPollError('Não foi possível verificar status após forçar.');
-                return;
-              }
-              const json: PaymentStatusResponse = await res.json();
-              if (json.status === 'PAID') {
-                setStep('confirmation');
-              } else {
-                setPollError('Pagamento ainda não confirmado após forçar. Tente novamente.');
-              }
-            } catch (e) {
-              console.error('force-confirm error', e);
-              setPollError('Erro ao forçar/verificar pagamento.');
-            } finally {
-              setIsLoading(false);
-            }
-          }}
-          className="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors disabled:opacity-50"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Verificando...' : 'Já paguei, confirmar pagamento'}
-        </button>
-        <button onClick={() => { resetPaymentState(); setStep('details'); }} className="text-sm text-zinc-400 hover:text-white transition-colors">&larr; Voltar e alterar dados</button>
-      </div>
-    </div>
+    <PaymentPreview paymentMethod={paymentMethod} paymentLink={paymentLink} pixPayload={pixPayload} boletoBarcode={boletoBarcode} billingId={billingId} billingIdParam={billingIdParam} isLoading={isLoading} pollError={pollError} error={error} onForceConfirm={async () => {
+      const targetBillingId = billingId || billingIdParam || undefined;
+      if (!targetBillingId) return;
+      try {
+        await fetch(`${getApiBaseUrl()}/api/force-set-status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ billingId: targetBillingId, status: 'PAID' }) });
+        const res = await fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${encodeURIComponent(targetBillingId)}`);
+        if (res && res.ok) {
+          const json: PaymentStatusResponse = await res.json();
+          if (json.status === 'PAID') setStep('confirmation'); else setPollError('Pagamento ainda não confirmado após forçar. Tente novamente.');
+        }
+      } catch (e) { setPollError('Erro ao forçar/verificar pagamento.'); }
+    } } onBack={() => { resetPaymentState(); setStep('details'); }} />
   );
 
   const renderConfirmationStep = () => (

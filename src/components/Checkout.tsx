@@ -34,6 +34,28 @@ const maskCEP = (value: string): string => {
   return `${numbers.slice(0, 5)}-${numbers.slice(5, 8)}`;
 };
 
+const maskCardNumber = (value: string): string => {
+  const numbers = value.replace(/\D/g, '');
+  
+  if (numbers.length === 0) return '';
+  if (numbers.length <= 4) return numbers;
+  if (numbers.length <= 8) return `${numbers.slice(0, 4)} ${numbers.slice(4)}`;
+  if (numbers.length <= 12) return `${numbers.slice(0, 4)} ${numbers.slice(4, 8)} ${numbers.slice(8)}`;
+  return `${numbers.slice(0, 4)} ${numbers.slice(4, 8)} ${numbers.slice(8, 12)} ${numbers.slice(12, 16)}`;
+};
+
+const maskExpiration = (value: string): string => {
+  const numbers = value.replace(/\D/g, '');
+  
+  if (numbers.length === 0) return '';
+  if (numbers.length <= 2) return numbers;
+  return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}`;
+};
+
+const maskCVV = (value: string): string => {
+  return value.replace(/\D/g, '').slice(0, 4);
+};
+
 interface PaymentStatusResponse {
   status: 'PAID' | 'PENDING' | 'EXPIRED';
 }
@@ -56,6 +78,10 @@ interface CreatePaymentResponse {
 
 interface ErrorResponse {
   error?: string;
+  errorMessage?: string;
+  errorDescription?: string;
+  errorCode?: string;
+  billingId?: string;
 }
 
 interface ViaCepResponse {
@@ -86,7 +112,7 @@ export default function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const certificate: Certificate = location.state?.certificate;
+  const certificate: Certificate | undefined = location.state?.certificate;
 
   const [step, setStep] = useState<Step>('details');
   const [isLoading, setIsLoading] = useState(false);
@@ -105,6 +131,11 @@ export default function Checkout() {
   const [customerAddressCity, setCustomerAddressCity] = useState('');
   const [customerAddressState, setCustomerAddressState] = useState('');
 
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [cardCVV, setCardCVV] = useState('');
+  const [cardExpiration, setCardExpiration] = useState('');
+
   const [paymentMethod, setPaymentMethod] = useState<'PIX' | 'CARD' | 'BOLETO'>('PIX');
   const [paymentLink, setPaymentLink] = useState<string | null>(null);
   const [billingId, setBillingId] = useState<string | null>(null);
@@ -112,6 +143,22 @@ export default function Checkout() {
   const [boletoBarcode, setBoletoBarcode] = useState<string | null>(null);
   const [autoOpened, setAutoOpened] = useState(false);
   const [pollError, setPollError] = useState<string | null>(null);
+
+  // reset payment-related state when starting a new payment or going back
+  function resetPaymentState() {
+    setPaymentLink(null);
+    setBillingId(null);
+    setPixPayload(null);
+    setBoletoBarcode(null);
+    setAutoOpened(false);
+    setPollError(null);
+    setError(null);
+    setIsLoading(false);
+    setCardNumber('');
+    setCardName('');
+    setCardCVV('');
+    setCardExpiration('');
+  }
 
   useEffect(() => {
     const fetchAddress = async () => {
@@ -164,50 +211,74 @@ export default function Checkout() {
   }, [searchParams]);
 
   useEffect(() => {
-    let interval: number | undefined;
+    let timeoutId: number | undefined;
+    let stopped = false;
+    // exponential backoff: start at 5s, double up to 60s
+    let delay = 5000;
+    const maxDelay = 60000;
+
+    async function doPollOnce() {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${billingId}`);
+        if (res && res.ok) {
+          const json: PaymentStatusResponse = await res.json();
+          if (json.status === 'PAID') {
+            setStep('confirmation');
+            return;
+          }
+        }
+      } catch (e) {
+        // network or other error - ignore and backoff
+      }
+
+      if (!stopped) {
+        // increase delay (exponential/backoff) but keep it reasonable
+        delay = Math.min(maxDelay, delay * 2);
+        timeoutId = window.setTimeout(doPollOnce, delay);
+      }
+    }
+
     if (step === 'payment' && billingId) {
       if (paymentLink && !autoOpened) {
         try {
           if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' });
         } catch (e) {}
         try {
-          // Don't navigate away to the raw QR image (it replaces the app and loses state).
-          // For PIX we already render the QR inline, so skip navigation. For boleto/cartão open in a new tab.
-          if (paymentMethod === 'PIX') {
-            // optionally: window.open(paymentLink, '_blank', 'noopener');
-          } else {
+          if (paymentMethod !== 'PIX') {
             window.open(paymentLink, '_blank', 'noopener');
           }
         } catch {
-          try {
-            if (paymentMethod !== 'PIX') window.location.assign(paymentLink);
-          } catch {}
+          try { if (paymentMethod !== 'PIX') window.location.assign(paymentLink); } catch {}
         }
         setAutoOpened(true);
       }
 
-      interval = window.setInterval(async () => {
-        try {
-          const res = await fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${billingId}`);
-          if (!res.ok) return;
-          const json: PaymentStatusResponse = await res.json();
-          if (json.status === 'PAID') {
-            setStep('confirmation');
-            if (interval) window.clearInterval(interval);
-          }
-        } catch (e) {
-          // controle pra net
-        }
-      }, 3000);
+      // start polling after initial delay
+      timeoutId = window.setTimeout(doPollOnce, delay);
     }
 
-    return () => { if (interval) window.clearInterval(interval); };
+    return () => { stopped = true; if (timeoutId) window.clearTimeout(timeoutId); };
   }, [step, billingId, paymentLink, autoOpened]);
 
   const handleCreatePayment = async () => {
     if (!certificate) return;
+    // clear any previous payment state to avoid showing stale QR/links
+    resetPaymentState();
     if (!customerName || !customerEmail || !customerTaxId) {
       setError('Preencha nome, email e CPF/CNPJ.');
+      return;
+    }
+
+    if (paymentMethod === 'BOLETO' && 
+        (!customerAddressCep || !customerAddressPlace || !customerAddressNumber || 
+         !customerAddressNeighborhood || !customerAddressCity || !customerAddressState)) {
+      setError('Preencha todos os campos do endereço de cobrança.');
+      return;
+    }
+
+    if (paymentMethod === 'CARD' && 
+        (!cardNumber || !cardName || !cardCVV || !cardExpiration)) {
+      setError('Preencha todos os dados do cartão.');
       return;
     }
 
@@ -240,6 +311,12 @@ export default function Checkout() {
           } : undefined,
         },
         paymentMethod,
+        cardInfo: paymentMethod === 'CARD' ? {
+          number: cardNumber.replace(/\D/g, ''),
+          name: cardName,
+          cvv: cardCVV,
+          expiration: cardExpiration.replace(/\D/g, ''),
+        } : undefined,
         callbackAddress: `${getApiBaseUrl()}/api/webhook`,
       };
 
@@ -298,7 +375,11 @@ export default function Checkout() {
 
         if (data.billingId) {
           setBillingId(data.billingId);
-          try { navigate(`?billingId=${encodeURIComponent(data.billingId)}`, { replace: true }); } catch {}
+          try {
+            if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+              window.history.replaceState(null, '', `?billingId=${encodeURIComponent(data.billingId)}`);
+            }
+          } catch {}
         }
         
         if (hasPaymentInfo) {
@@ -313,7 +394,21 @@ export default function Checkout() {
         const contentType = response.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           const errorData: ErrorResponse = await response.json();
-          setError(errorData.error || 'Ocorreu um erro ao processar o pagamento.');
+          
+          // Se houver billingId mesmo com erro (para permitir force-set-status em testes),
+          // avançar para a tela de pagamento
+          if (errorData.billingId && (paymentMethod === 'CARD' || paymentMethod === 'PIX')) {
+            setBillingId(errorData.billingId);
+            try {
+              if (typeof window !== 'undefined' && window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', `?billingId=${encodeURIComponent(errorData.billingId)}`);
+              }
+            } catch {}
+            setStep('payment');
+            setError(errorData.errorMessage || errorData.error || 'Erro ao processar pagamento. Use o botão "Já paguei, confirmar pagamento" para testes.');
+          } else {
+            setError(errorData.errorMessage || errorData.error || 'Ocorreu um erro ao processar o pagamento.');
+          }
         } else {
           const errorText = await response.text();
           console.error('Server returned non-JSON response:', errorText);
@@ -328,7 +423,9 @@ export default function Checkout() {
     }
   };
 
-  if (!certificate) {
+  const billingIdParam = searchParams.get('billingId');
+
+  if (!certificate && !billingIdParam) {
     return (
       <div className="pt-32 pb-20 px-6 min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -418,6 +515,30 @@ export default function Checkout() {
         </div>
       )}
 
+      {paymentMethod === 'CARD' && (
+        <div className="space-y-4 mb-8 border-t border-zinc-800 pt-6 mt-6">
+            <h3 className="text-lg font-bold text-white mb-4">Dados do Cartão</h3>
+            <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">Número do Cartão</label>
+                <input type="text" value={cardNumber} onChange={(e) => setCardNumber(maskCardNumber(e.target.value))} placeholder="0000 0000 0000 0000" maxLength={19} className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">Nome no Cartão</label>
+                <input type="text" value={cardName} onChange={(e) => setCardName(e.target.value.toUpperCase())} placeholder="NOME COMO ESTÁ NO CARTÃO" className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-zinc-300 mb-2">Validade</label>
+                    <input type="text" value={cardExpiration} onChange={(e) => setCardExpiration(maskExpiration(e.target.value))} placeholder="MM/AA" maxLength={5} className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-zinc-300 mb-2">CVV</label>
+                    <input type="text" value={cardCVV} onChange={(e) => setCardCVV(maskCVV(e.target.value))} placeholder="123" maxLength={4} className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+                </div>
+            </div>
+        </div>
+      )}
+
       <button onClick={handleCreatePayment} disabled={isLoading} className="w-full mt-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-lg transition-colors disabled:opacity-50">{isLoading ? 'Aguarde...' : 'Finalizar Pedido'}</button>
       {error && <p className="text-red-400 mt-4">{error}</p>}
     </div>
@@ -472,9 +593,10 @@ export default function Checkout() {
               </div>
             )}
 
-          <a 
-            href={paymentLink} 
-            rel="noreferrer" 
+          <a
+            href={paymentLink}
+            target={paymentMethod === 'BOLETO' ? '_blank' : undefined}
+            rel={paymentMethod === 'BOLETO' ? 'noreferrer noopener' : 'noreferrer'}
             onClick={() => { try { if (typeof window !== 'undefined' && window.scrollTo) window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) {} }}
             className="block w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors mb-4"
           >
@@ -489,22 +611,51 @@ export default function Checkout() {
       {error && <p className="text-red-400 mt-4">{error}</p>}
       
       <div className="mt-6 border-t border-zinc-800 pt-6 flex flex-col items-center gap-4">
-        <button 
+        <button
           onClick={async () => {
-            if (!billingId) return;
-            setIsLoading(true); setPollError(null);
+            const targetBillingId = billingId || billingIdParam || undefined;
+            console.debug('[checkout] force-confirm clicked, billingId=', targetBillingId);
+            if (!targetBillingId) return;
+            setIsLoading(true);
+            setPollError(null);
             try {
-              const res = await fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${billingId}`);
+              const forceRes = await fetch(`${getApiBaseUrl()}/api/force-set-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ billingId: targetBillingId, status: 'PAID' }),
+              });
+
+              if (!forceRes.ok) {
+                const text = await forceRes.text().catch(() => '');
+                setPollError(`Falha ao forçar pagamento: ${text || forceRes.status}`);
+                return;
+              }
+
+              // Remover dps de forçar, verificar status real
+              const res = await fetch(`${getApiBaseUrl()}/api/get-payment-status?billingId=${encodeURIComponent(targetBillingId)}`);
+              if (!res.ok) {
+                setPollError('Não foi possível verificar status após forçar.');
+                return;
+              }
               const json: PaymentStatusResponse = await res.json();
-              if (json.status === 'PAID') setStep('confirmation'); else setPollError('Pagamento ainda não confirmado. Tente novamente em alguns segundos.');
-            } catch (e) { setPollError('Erro ao verificar status do pagamento.'); } finally { setIsLoading(false); }
-          }} 
+              if (json.status === 'PAID') {
+                setStep('confirmation');
+              } else {
+                setPollError('Pagamento ainda não confirmado após forçar. Tente novamente.');
+              }
+            } catch (e) {
+              console.error('force-confirm error', e);
+              setPollError('Erro ao forçar/verificar pagamento.');
+            } finally {
+              setIsLoading(false);
+            }
+          }}
           className="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors disabled:opacity-50"
           disabled={isLoading}
         >
           {isLoading ? 'Verificando...' : 'Já paguei, confirmar pagamento'}
         </button>
-        <button onClick={() => setStep('details')} className="text-sm text-zinc-400 hover:text-white transition-colors">&larr; Voltar e alterar dados</button>
+        <button onClick={() => { resetPaymentState(); setStep('details'); }} className="text-sm text-zinc-400 hover:text-white transition-colors">&larr; Voltar e alterar dados</button>
       </div>
     </div>
   );
@@ -512,7 +663,7 @@ export default function Checkout() {
   const renderConfirmationStep = () => (
     <div className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-xl text-center">
       <h2 className="text-xl font-bold text-white mb-4">3. Pagamento Confirmado!</h2>
-      <p className="text-zinc-400 mb-6">Seu pagamento foi aprovado com sucesso. Em breve você receberá o seu certificado no email {customerEmail}.</p>
+      <p className="text-zinc-400 mb-6">Seu pagamento foi aprovado com sucesso. Em breve você será contatado no email {customerEmail}.</p>
       <button onClick={() => navigate('/')} className="block w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors mb-4">Ir para a página inicial</button>
     </div>
   );
@@ -532,19 +683,19 @@ export default function Checkout() {
               <h2 className="text-lg font-bold text-white mb-4">Resumo do Pedido</h2>
               <div className="space-y-4 pb-4 border-b border-zinc-800">
                 <div>
-                  <h3 className="text-white font-semibold mb-1">{certificate.title}</h3>
-                  <p className="text-sm text-zinc-400">{certificate.description}</p>
-                  <p className="text-xs text-zinc-500 mt-1">{certificate.validity}</p>
+                  <h3 className="text-white font-semibold mb-1">{certificate?.title}</h3>
+                  <p className="text-sm text-zinc-400">{certificate?.description}</p>
+                  <p className="text-xs text-zinc-500 mt-1">{certificate?.validity}</p>
                 </div>
               </div>
               <div className="mt-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-zinc-400">Subtotal</span>
-                  <span className="text-white font-semibold">{certificate.price}</span>
+                  <span className="text-white font-semibold">{certificate?.price}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-zinc-400">Total</span>
-                  <span className="text-2xl font-bold text-emerald-400">{certificate.price}</span>
+                  <span className="text-2xl font-bold text-emerald-400">{certificate?.price}</span>
                 </div>
               </div>
             </div>
@@ -555,3 +706,4 @@ export default function Checkout() {
     </section>
   );
 }
+

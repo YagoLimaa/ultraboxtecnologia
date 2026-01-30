@@ -5,6 +5,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #FFFFFF;
+  color: #333333;
 }
 
 * { font-family: 'Inter', system-ui, sans-serif; }
@@ -12,4 +14,14 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Variáveis de cor - tema laranja e branco */
+:root {
+  --primary-orange: #FF6B35;
+  --secondary-orange: #FF8C42;
+  --light-orange: #FFE5D9;
+  --white: #FFFFFF;
+  --dark-gray: #333333;
+  --light-gray: #F5F5F5;
 }

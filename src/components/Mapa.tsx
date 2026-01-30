@@ -28,21 +28,21 @@ const allRegioes: Regiao[] = novasEmpresas as Regiao[];
 
 const empresaIcon = new DivIcon({
   className: 'custom-icon-empresa',
-  html: `<div style="background: #ef4444; width: 32px; height: 32px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"></div>`,
+  html: `<div style="background: #FF6B35; width: 32px; height: 32px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"></div>`,
   iconSize: [32, 32],
   iconAnchor: [16, 32]
 });
 
 const regiaoIcon = new DivIcon({
     className: 'custom-icon-regiao',
-    html: `<div style="background: #10b981; width: 32px; height: 32px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.2);"></div>`,
+    html: `<div style="background: #FF8C42; width: 32px; height: 32px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.2);"></div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 32]
 });
 
 const clienteIcon = new DivIcon({
   className: 'custom-icon-cliente',
-  html: `<div style="background: #3b82f6; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+  html: `<div style="background: #FFE5D9; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
   iconSize: [16, 16],
   iconAnchor: [8, 8]
 });

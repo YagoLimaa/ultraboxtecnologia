@@ -78,21 +78,21 @@ export default function PaymentSuccess() {
   }, [billingId, sessionId, isPolling]);
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-24 text-white">
+    <div className="max-w-3xl mx-auto px-6 py-24 text-gray-900">
       <div style={{ position: 'fixed', right: 8, top: 8, background: '#111', color: '#fff', padding: 8, borderRadius: 6, zIndex: 9999 }}>
         <div style={{ fontSize: 12 }}>debug: <span style={{ fontFamily: 'monospace' }}>{window.location.search}</span></div>
       </div>
       <h1 className="text-3xl font-bold mb-2">Payment Successful!</h1>
-      <p className="text-zinc-300 mb-4">Thank you for your purchase.</p>
+      <p className="text-gray-600 mb-4">Thank you for your purchase.</p>
       <h1 className="text-xl font-semibold mb-6">teste teste</h1>
       {(billingId || sessionId) && (
         <div>
           <h2 className="text-2xl font-semibold mb-2">Payment Status</h2>
           <p>
             {billingId ? (
-              <>Billing ID: <strong className="text-white">{billingId}</strong></>
+              <>Billing ID: <strong className="text-gray-900">{billingId}</strong></>
             ) : (
-              <>Session: <strong className="text-white">{sessionId}</strong></>
+              <>Session: <strong className="text-gray-900">{sessionId}</strong></>
             )}
           </p>
           {error && <p className="text-red-400">Error: {error}</p>}
@@ -104,13 +104,13 @@ export default function PaymentSuccess() {
             </div>
           )}
           <div style={{ marginTop: 8 }}>
-            <button onClick={() => setIsPolling(true)} className="px-3 py-2 bg-emerald-600 text-white rounded-md mr-2">Continuar polling</button>
+            <button onClick={() => setIsPolling(true)} className="px-3 py-2 bg-orange-600 text-white rounded-md mr-2">Continuar polling</button>
             <button onClick={() => {
               if (!billingId && !sessionId) return;
               const q = sessionId ? `session=${encodeURIComponent(sessionId)}` : `billingId=${encodeURIComponent(billingId || '')}`;
               fetch(`${getApiBaseUrl()}/api/get-payment-status?${q}`, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } }).then(r => r.json()).then(d => setPaymentStatus((d as any).status)).catch(() => setError('Erro ao verificar status'));
-            }} className="px-3 py-2 bg-zinc-800 text-white rounded-md">Verificar agora</button>
-            <button onClick={() => navigate('/')} className="px-3 py-2 ml-2 bg-zinc-700 text-white rounded-md">Ir para a loja</button>
+            }} className="px-3 py-2 bg-gray-300 text-gray-900 rounded-md">Verificar agora</button>
+            <button onClick={() => navigate('/')} className="px-3 py-2 ml-2 bg-gray-200 text-gray-900 rounded-md">Ir para a loja</button>
           </div>
         </div>
       )}
@@ -154,7 +154,7 @@ function UploadForm({ billingId }: { billingId: string }) {
     <form onSubmit={submit}>
       <input type="file" multiple onChange={(e) => setFiles(e.target.files)} />
       <div style={{ marginTop: 8 }}>
-        <button type="submit" className="px-3 py-2 bg-blue-600 text-white rounded-md">Enviar arquivos</button>
+        <button type="submit" className="px-3 py-2 bg-orange-600 text-white rounded-md">Enviar arquivos</button>
       </div>
       {status && <p style={{ marginTop: 8 }}>{status}</p>}
     </form>
